@@ -2,3 +2,8 @@
 
 # Except this file
 !.gitignore
+.env
+.zip
+.shp
+.txt
+data/
