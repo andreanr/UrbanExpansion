@@ -2,9 +2,7 @@ import pandas as pd
 import json
 import pdb
 
-def get_features(experiment):
-    return [x for x in experiment['Features'] if experiment['Features'][x]==True]
-
+from . import utils
 
 def get_data(year,
              city,
@@ -14,7 +12,7 @@ def get_data(year,
              labels_table_prefix,
              intersect_percent):
 
-    features_table_name = '{city}_{prefix}_{size}'.format(city=city,
+    features_table_name = '{city}_{prefix}_{percent}_{size}'.format(city=city,
                                                           prefix=features_table_prefix,
                                                           grid_size=grid_size)
 
