@@ -6,4 +6,5 @@
 .zip
 .shp
 .txt
+.DS_Store
 data/shapefiles/
