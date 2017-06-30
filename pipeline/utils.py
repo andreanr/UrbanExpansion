@@ -1,7 +1,3 @@
-import pandas as pd
-import json
-import pdb
-import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 from dotenv import load_dotenv
@@ -30,3 +26,9 @@ def get_engine():
         user=user, passwd=passwd, host=host, port=port, db=db)
     engine = create_engine(url, poolclass=NullPool)
     return engine
+
+
+def get_features(experiment):
+    return [x for x in experiment['Features'] if experiment['Features'][x]==True]
+
+

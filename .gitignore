@@ -6,4 +6,6 @@
 .zip
 .shp
 .txt
-data/shapefiles/
+.DS_Store
+__pycache__
+data/
