@@ -2,27 +2,27 @@
 
 . ./../../.env
 
-YEAR=2005
+YEAR=1995
 CITY='amman'
 COUNTRY='Jordan'
 
 
-#mkdir ${DATADIR}/city_lights
-#mkdir ${DATADIR}/city_lights/$YEAR
+mkdir ${DATADIR}/city_lights
+mkdir ${DATADIR}/city_lights/$YEAR
 
 cd ${DATADIR}/city_lights/$YEAR
 
 # Get links for download
-#cat ${DATADIR}/city_lights/ligas_lights.csv | grep $YEAR | awk -F ',' '{print $2}' > temp.txt
+cat ${DATADIR}/city_lights/ligas_lights.csv | grep $YEAR | awk -F ',' '{print $2}' > temp.txt
 
 ## Download data for the appropriate year
-#for i in $(cat temp.txt); do wget $i; done
+for i in $(cat temp.txt); do wget $i; done
 
 # Extract
-#for z in *.tgz; do tar -xvzf $z; done 
+for z in *.tgz; do tar -xvzf $z; done 
 
 # Remove temp file
-#rm temp.txt
+rm temp.txt
 
 # Cut raster to shp
 for z in *.tif; do 
