@@ -3,7 +3,6 @@
 . ./../../.env
 
 CITY="amman"
-COUNTRY="jordan"
 
 # create data directory
 mkdir $DATADIR/dem
@@ -12,7 +11,10 @@ mkdir $DATADIR/dem
 #### TODO
 
 #unzip files into directory
-#for z in $DATADIR/dem/*.zip; do unzip -o -d $DATADIR/dem/  $z; done
-#
-raster2pgsql -d -I -C -M -F -t 100x100 -s 4326 $DATADIR/dem/*_med075.tif raw.${CITY}_dem > $DATADIR/dem/elev.sql
-psql -d $PGDATABASE -h $PGHOST -U $POSTGRES_USER -f $DATADIR/dem/elev.sql
+#for z in $DATADIR/dem/${CITY}/*.zip; do unzip -o -d $DATADIR/dem/${CITY}  $z; done
+
+gdalwarp -cutline ${DATADIR}/boundries/${CITY}.shp -crop_to_cutline -dstalpha $DATADIR/dem/${CITY}/*_med075.tif  ${DATADIR}/dem/${CITY}/dem_${CITY}.tif
+
+
+raster2pgsql -d -I -C -M -F -s 4326 $DATADIR/dem/${CITY}/dem_${CITY}.tif raw.${CITY}_dem > $DATADIR/dem/${CITY}/elev.sql
+psql -d $PGDATABASE -h $PGHOST -U $POSTGRES_USER -f $DATADIR/dem/${CITY}/elev.sql
