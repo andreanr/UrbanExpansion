@@ -67,6 +67,7 @@ def genhexagons_sql(city, esri, engine):
                                                         esri=esri))
     cur.execute(create_func)
     db_conn.commit()
+    db_conn.close()
 
 
 def generate_grid(city, esri, grid_size, engine):
@@ -128,9 +129,10 @@ def generate_grid(city, esri, grid_size, engine):
     cur.execute(p_key)
     db_conn.commit()
 
-    #drop_tmp = ("""DROP TABLE public.grids_{city}_temp""".format(city=city))
-    #cur.execute(drop_tmp)
-    ##db_conn.commit()
+    drop_tmp = ("""DROP TABLE public.grids_{city}_temp""".format(city=city))
+    cur.execute(drop_tmp)
+    db_conn.commit()
+    db_conn.close()
 
 
 def generate_table(engine, city, grid_size, name, columns_dict):
