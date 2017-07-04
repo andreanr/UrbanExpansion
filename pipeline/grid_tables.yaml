@@ -1,0 +1,35 @@
+
+
+water_bodies:
+    water_bodies_distance_km: numeric
+    water_bodies_flag: bool
+
+urban_center:
+    urban_center_distance_km: numeric
+
+urban_distance:
+    year: int
+    urban_distance_km: numeric
+
+urban_neighbours:
+    year: int
+    intersect_percent: numeric
+    urban_neighbours: int
+
+slope:
+    min_slope_pct: numeric
+    max_slope_pct: numeric
+    mean_slope_pct: numeric
+    stddev_slope_pct: numeric
+    min_slope_degrees: numeric
+    max_slope_degrees: numeric
+    mean_slope_degrees: numeric
+    stddev_slope_degrees: numeric
+
+dem:
+    max_height: numeric
+    min_height: numeric
+    mean_height: numeric
+
+
+
