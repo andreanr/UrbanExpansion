@@ -59,8 +59,8 @@ def genhexagons_sql(city, esri, engine):
                            SELECT ST_Translate(polygon_string::geometry, b , a+c)  as cell
                         ) as two_hex;
                         ALTER TABLE public.grids_{city}_temp
-                        ALTER COLUMN cell TYPE geometry(Polygon, 4326)
-                        USING ST_SetSRID(cell,4326);
+                        ALTER COLUMN cell TYPE geometry(Polygon, {esri})
+                        USING ST_SetSRID(cell, {esri});
                         RETURN NULL;
                     END;
                     $total$ LANGUAGE plpgsql;""".format(city=city,
@@ -76,14 +76,17 @@ def generate_grid(city, esri, grid_size, engine):
     genhexagons_sql(city, esri, engine)
 
     # temp table 
-    query_tmp = ("""WITH geom_bbox as (
+    query_tmp = ("""WITH buffer_prj AS (
+                         SELECT st_transform(geom, {esri}) as geom
+                         FROM raw.{city}
+                    ), geom_bbox as (
                           SELECT
                                {grid_size} as width,
                                ST_XMin(geom) as xmin,
                                ST_YMin(geom) as ymin,
                                ST_XMax(geom) as xmax,
                                ST_YMax(geom) as ymax
-                       FROM raw.{city}
+                       FROM buffer_prj
                        GROUP BY geom)
                        SELECT genhexagons(width,xmin,ymin,xmax,ymax)
                        FROM geom_bbox""".format(city=city,
@@ -92,7 +95,7 @@ def generate_grid(city, esri, grid_size, engine):
     cur.execute(query_tmp)
     db_conn.commit()
 
-    drop_grid = ("""DROP TABLE grids.{city}_grid_{size}""".format(city=city,
+    drop_grid = ("""DROP TABLE grids.{city}_grid_{size} CASCADE""".format(city=city,
                                                                  size=grid_size))
     cur.execute(drop_grid)
     db_conn.commit()
@@ -125,9 +128,9 @@ def generate_grid(city, esri, grid_size, engine):
     cur.execute(p_key)
     db_conn.commit()
 
-    drop_tmp = ("""DROP TABLE public.grids_{city}_temp""".format(city=city))
-    cur.execute(drop_tmp)
-    db_conn.commit()
+    #drop_tmp = ("""DROP TABLE public.grids_{city}_temp""".format(city=city))
+    #cur.execute(drop_tmp)
+    ##db_conn.commit()
 
 
 def generate_table(engine, city, grid_size, name, columns_dict):
