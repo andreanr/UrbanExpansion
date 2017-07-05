@@ -4,32 +4,39 @@ water_bodies:
     water_bodies_distance_km: numeric
     water_bodies_flag: int
 
-#urban_center:
-#    urban_center_distance_km: numeric
+urban_center:
+    urban_center_distance_km: numeric
 
 built_lds:
     year: int
-    min_built: numeric
-    max_built: numeric
-    mean_built: numeric
-    stddev_built: numeric
-    sum_built: numeric
+    min_built_lds: numeric
+    max_built_lds: numeric
+    mean_built_lds: numeric
+    stddev_built_lds: numeric
+    sum_built_lds: numeric
+
+settlements:
+    year: int
+    min_settlements: numeric
+    max_settlements: numeric
+    mean_settlements: numeric
+    sum_settlements: numeric
 
 population:
    year: int
-   min_pop: numeric
-   max_pop: numeric
-   mean_pop: numeric
-   stddev_pop: numeric
-   sum_pop: numeric
+   min_population: numeric
+   max_population: numeric
+   mean_population: numeric
+   stddev_population: numeric
+   sum_population: numeric
 
 city_lights:
    year: int
-   min_lights: numeric
-   max_lights: numeric
-   mean_lights: numeric
-   stddev_lights: numeric
-   sum_lights: numeric
+   min_city_lights: numeric
+   max_city_lights: numeric
+   mean_city_lights: numeric
+   stddev_city_lights: numeric
+   sum_city_lights: numeric
 
 #urban_distance:
 #    year: int

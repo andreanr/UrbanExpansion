@@ -3,14 +3,14 @@
 . ./../../.env
 
 CITY="amman"
-YEAR=2014
+YEAR=2015
 
 # create data directory
 mkdir $DATADIR/settlements
 mkdir $DATADIR/settlements/$YEAR
 
 ## descarga
-wget -O $DATADIR/settlements/$YEAR/GHS_BUILT_LDS${YEAR}_GLOBE_R2016A_54009_250_v1_0.zip http://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_SMOD_POP_GLOBE_R2016A/GHS_SMOD_POP${YEAR}_GLOBE_R2016A_54009_1k/V1-0/GHS_SMOD_POP${YEAR}_GLOBE_R2016A_54009_1k_v1_0.zip
+wget -O $DATADIR/settlements/$YEAR/GHS_SMOD_POP${YEAR}_GLOBE_R2016A_54009_1k_v1_0.zip http://cidportal.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_SMOD_POP_GLOBE_R2016A/GHS_SMOD_POP${YEAR}_GLOBE_R2016A_54009_1k/V1-0/GHS_SMOD_POP${YEAR}_GLOBE_R2016A_54009_1k_v1_0.zip
 
 echo 'unzip'
 unzip -o -d $DATADIR/settlements/$YEAR/ $DATADIR/settlements/$YEAR/GHS_SMOD_POP${YEAR}_GLOBE_R2016A_54009_1k_v1_0.zip

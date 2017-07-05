@@ -96,7 +96,7 @@ def generate_grid(city, esri, grid_size, engine):
     cur.execute(query_tmp)
     db_conn.commit()
 
-    drop_grid = ("""DROP TABLE grids.{city}_grid_{size} CASCADE""".format(city=city,
+    drop_grid = ("""DROP TABLE IF EXISTS grids.{city}_grid_{size} CASCADE""".format(city=city,
                                                                  size=grid_size))
     cur.execute(drop_grid)
     db_conn.commit()
@@ -164,7 +164,7 @@ def generate_table(engine, city, grid_size, name, columns_dict):
 if __name__ == "__main__":
     yaml_file = 'grid_tables.yaml'
     city = 'amman'
-    grid_size = 1000
+    grid_size = 250
     esri = 32236
     tables = utils.read_yaml(yaml_file)
     # connection
