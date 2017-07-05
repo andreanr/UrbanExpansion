@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
+import os
+import yaml
 
 # Variables de ambiente
 load_dotenv(find_dotenv())
@@ -23,7 +25,7 @@ def get_engine():
     port = os.environ.get("PGPORT")
 
     url = 'postgresql://{user}:{passwd}@{host}:{port}/{db}'.format(
-        user=user, passwd=passwd, host=host, port=port, db=db)
+        user=user, passwd=password, host=host, port=port, db=database)
     engine = create_engine(url, poolclass=NullPool)
     return engine
 
@@ -32,3 +34,12 @@ def get_features(experiment):
     return [x for x in experiment['Features'] if experiment['Features'][x]==True]
 
 
+def read_yaml(config_file_name):
+    """
+    This function reads the config file
+    Args:
+       config_file_name (str): name of the config file
+    """
+    with open(config_file_name, 'r') as f:
+        config = yaml.load(f)
+    return config
