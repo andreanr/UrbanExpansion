@@ -1,0 +1,18 @@
+2017-07-04 22:06:04,259 INFO osmnx Configured osmnx
+2017-07-04 22:06:04,282 INFO osmnx Retrieved response from cache file "cache/aeaad0e5d94be13f13b28fe9ed8cb6f5.json" for URL "https://nominatim.openstreetmap.org/search?format=json&limit=1&dedupe=0&polygon_geojson=1&city=amman"
+2017-07-04 22:06:04,286 INFO osmnx Projected the GeoDataFrame "amman" to UTM-36 in 0.00 seconds
+2017-07-04 22:06:04,293 INFO osmnx Projected the GeoDataFrame "amman" to EPSG 4326 in 0.00 seconds
+2017-07-04 22:06:04,293 INFO osmnx Buffered the GeoDataFrame "amman" to 25000 meters
+2017-07-04 22:06:04,293 INFO osmnx Created GeoDataFrame with 1 row for query "{'city': 'amman'}"
+2017-07-04 22:06:50,865 INFO osmnx Configured osmnx
+2017-07-04 22:06:50,889 INFO osmnx Retrieved response from cache file "cache/aeaad0e5d94be13f13b28fe9ed8cb6f5.json" for URL "https://nominatim.openstreetmap.org/search?format=json&limit=1&dedupe=0&polygon_geojson=1&city=amman"
+2017-07-04 22:06:50,893 INFO osmnx Projected the GeoDataFrame "amman" to UTM-36 in 0.00 seconds
+2017-07-04 22:06:50,899 INFO osmnx Projected the GeoDataFrame "amman" to EPSG 4326 in 0.00 seconds
+2017-07-04 22:06:50,900 INFO osmnx Buffered the GeoDataFrame "amman" to 25000 meters
+2017-07-04 22:06:50,900 INFO osmnx Created GeoDataFrame with 1 row for query "{'city': 'amman'}"
+2017-07-04 22:31:58,359 INFO osmnx Configured osmnx
+2017-07-04 22:31:58,382 INFO osmnx Retrieved response from cache file "cache/aeaad0e5d94be13f13b28fe9ed8cb6f5.json" for URL "https://nominatim.openstreetmap.org/search?format=json&limit=1&dedupe=0&polygon_geojson=1&city=amman"
+2017-07-04 22:31:58,386 INFO osmnx Projected the GeoDataFrame "amman" to UTM-36 in 0.00 seconds
+2017-07-04 22:31:58,393 INFO osmnx Projected the GeoDataFrame "amman" to EPSG 4326 in 0.00 seconds
+2017-07-04 22:31:58,393 INFO osmnx Buffered the GeoDataFrame "amman" to 25000 meters
+2017-07-04 22:31:58,393 INFO osmnx Created GeoDataFrame with 1 row for query "{'city': 'amman'}"
