@@ -138,6 +138,7 @@ def urban_neighbours(city, time, grid_size, esri, intersect_percent, engine):
     cur = db_conn.cursor()
     cur.execute(QUERY)
 
+
 def population(grid_size, city, time, esri, engine):
     QUERY_INSERT = (""" WITH pop_tr AS (
                             SELECT st_transform(rast, {esri}) as rast
@@ -197,6 +198,7 @@ def dem(grid_size, city, esri, engine):
     db_conn.commit()
     db_conn.close()
 
+
 def slope(grid_size, city, esri, engine):
     # Create table
     QUERY_INSERT = (""" WITH clip_slope_pct AS (
@@ -246,6 +248,36 @@ def slope(grid_size, city, esri, engine):
     db_conn.commit()
     db_conn.close()
 
+def city_lights(grid_size, city, time, esri, engine):
+    QUERY_INSERT = ("""WITH lights_tr AS (
+                            SELECT st_transform(rast, {esri}) AS rast
+                            FROM raw.{city}_city_lights_{time}
+                    ), clip_lights AS (
+                        SELECT cell_id,
+                        ST_SummaryStats(st_union(st_clip(rast, 1, cell, True))) AS stats
+                        FROM grids.{city}_grid_{size}
+                        LEFT JOIN lights_tr
+                        ON ST_Intersects(rast, cell)
+                        GROUP BY cell_id
+                    ) INSERT INTO grids.{city}_city_lights_{size}
+                        (cell_id, year, min_lights, max_lights, mean_lights, stddev_lights, sum_lights)
+                         SELECT cell_id,
+                                {time} as year,
+                                (stats).min AS min_lights,
+                                (stats).max AS max_lights,
+                                (stats).mean AS mean_lights,
+                                (stats).stddev AS stddev_lights,
+                                (stats).sum AS sum_lights
+                        FROM clip_lights""".format(city=city,
+                                                  size=grid_size,
+                                                  time=time,
+                                                  esri=esri))
+    db_conn = engine.raw_connection()
+    cur = db_conn.cursor()
+    cur.execute(QUERY_INSERT)
+    db_conn.commit()
+    db_conn.close()
+
 if __name__ == "__main__":
     grid_size = 1000
     city = 'amman'
@@ -256,4 +288,5 @@ if __name__ == "__main__":
     #slope(grid_size, city, esri, engine)
     #built_lds(grid_size, city, time, esri, engine)
     #dem(grid_size, city, esri, engine)
-    population(grid_size, city, time, esri, engine)
+    #population(grid_size, city, time, esri, engine)
+    city_lights(grid_size, city, time, esri, engine)
