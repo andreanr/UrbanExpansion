@@ -1,19 +1,19 @@
 
 
-water_bodies:
-    water_bodies_distance_km: numeric
-    water_bodies_flag: int
-
-urban_center:
-    urban_center_distance_km: numeric
-
-built_lds:
-    year: int
-    min_built_lds: numeric
-    max_built_lds: numeric
-    mean_built_lds: numeric
-    stddev_built_lds: numeric
-    sum_built_lds: numeric
+#water_bodies:
+#    water_bodies_distance_km: numeric
+#    water_bodies_flag: int
+#
+#urban_center:
+#    urban_center_distance_km: numeric
+#
+#built_lds:
+#    year: int
+#    min_built_lds: numeric
+#    max_built_lds: numeric
+#    mean_built_lds: numeric
+#    stddev_built_lds: numeric
+#    sum_built_lds: numeric
 
 settlements:
     year: int
@@ -22,30 +22,30 @@ settlements:
     mean_settlements: numeric
     sum_settlements: numeric
 
-population:
-   year: int
-   min_population: numeric
-   max_population: numeric
-   mean_population: numeric
-   stddev_population: numeric
-   sum_population: numeric
-
-city_lights:
-   year: int
-   min_city_lights: numeric
-   max_city_lights: numeric
-   mean_city_lights: numeric
-   stddev_city_lights: numeric
-   sum_city_lights: numeric
-
-#urban_distance:
-#    year: int
-#    urban_distance_km: numeric
-
-#urban_neighbours:
-#    year: int
-#    intersect_percent: numeric
-#    urban_neighbours: int
+#population:
+#   year: int
+#   min_population: numeric
+#   max_population: numeric
+#   mean_population: numeric
+#   stddev_population: numeric
+#   sum_population: numeric
+#
+#city_lights:
+#   year: int
+#   min_city_lights: numeric
+#   max_city_lights: numeric
+#   mean_city_lights: numeric
+#   stddev_city_lights: numeric
+#   sum_city_lights: numeric
+#
+##urban_distance:
+##    year: int
+##    urban_distance_km: numeric
+#
+##urban_neighbours:
+##    year: int
+##    intersect_percent: numeric
+##    urban_neighbours: int
 
 dem:
     min_dem: numeric
