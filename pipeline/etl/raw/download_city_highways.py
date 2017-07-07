@@ -199,9 +199,9 @@ if __name__ == "__main__":
     bbox = json.load(bbox_file)
     start = timeit.timeit()
     nodes_highways, paths_highways = get_highways(bbox)
-    end = timeit.timeit()
-    t = end - start
     pth = "/home/data/highways/" + city_name + "_highways.shp"
-    print("Download highways and converted to shapefile in " + t + " seconds")
     paths_highways.to_file(pth)
+    end = timeit.timeit()
+    t = str(end - start)
+    print("Download highways and converted to shapefile in " + t + " seconds")
 
