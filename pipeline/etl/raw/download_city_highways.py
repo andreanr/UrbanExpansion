@@ -8,7 +8,7 @@ import fiona
 import pandas as pd
 import geopandas as gpd
 import timeit
-# import pdb
+import pdb
 # import pickle
 
 from progress.bar import Bar # sudo pip install progress
@@ -198,10 +198,12 @@ if __name__ == "__main__":
     bbox_file = open(pth)
     bbox = json.load(bbox_file)
     start = timeit.timeit()
+    pdb.set_trace()
     nodes_highways, paths_highways = get_highways(bbox)
     pth = "/home/data/highways/" + city_name + "_highways.shp"
     paths_highways.to_file(pth)
     end = timeit.timeit()
     t = str(end - start)
     print("Download highways and converted to shapefile in " + t + " seconds")
+    print("Finished processing. Shapefiles saved at :" + pth)
 
