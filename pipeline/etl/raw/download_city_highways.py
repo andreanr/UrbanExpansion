@@ -68,26 +68,39 @@ def get_highways(bbox_city):
     print("Retrieving data from the OSM Overpass API...")
     nodes = dict()
     paths = dict()
-    bar = Bar('Processing', max=20, suffix='%(index)d/%(max)d - %(percent).1f%% - %(eta)ds')
+    mm = len(response_json['elements'])
+    bar = Bar('Processing', max=mm, suffix='%(index)d/%(max)d - %(percent).1f%% - %(eta)ds')
     for element in response_json['elements']:
         if element['type'] == 'node':
             key = element['id']
             nodes[key] = get_node(element)
+            bar.next()
         elif element['type'] == 'way':  # osm calls network paths 'ways'
             key = element['id']
             paths[key] = get_path(element)
-        bar.next()
+            bar.next()
     bar.finish()
     # pickle.dump(nodes, open("nodes.p", "wb"))
     # pickle.dump(paths, open("paths.p", "wb"))
     # nodes = pickle.load(open("nodes.p", "rb"))
     # paths = pickle.load(open("paths.p", "rb"))
+    print("Transforming data to pandas dataframe.")
     df_nodes = pd.DataFrame.from_dict(nodes)
+    print("Processing...")
     df_nodes = df_nodes.transpose()
+    print("Processing timestamps for each highway...")
     df_nodes['timestamp'] = pd.to_datetime(df_nodes['timestamp'])
     # pdb.set_trace()
     nodes = df_nodes.dropna(subset=df_nodes.columns.drop(['osmid', 'lon', 'lat']), how='all')
-    points = [Point(x['lon'], x['lat']) for i, x in nodes.iterrows()]
+    print("Processing nodes...")
+    mm = nodes.shape[0]
+    points = []
+    bar = Bar('Processing', max=mm, suffix='%(index)d/%(max)d - %(percent).1f%% - %(eta)ds')
+    for i,x in nodes.iterrows():
+        points.append(Point(x['lon'], x['lat']))
+        bar.next()
+    bar.finish()
+    # points = [Point(x['lon'], x['lat']) for i, x in nodes.iterrows()]
     nodes = nodes.drop(['lon', 'lat'], axis=1)
     nodes = nodes.set_geometry(points, crs=_crs)
 
@@ -99,8 +112,15 @@ def get_highways(bbox_city):
         return LineString(lista_nodos)
 
     # pdb.set_trace()
-    print("Proceed to LineString transformation for each highway.")
-    lineas = [wayline(paths[path]) for path in paths.keys()]
+    print("Proceeding to LineString transformation of each highway.")
+    mm = len(paths.keys())
+    bar = Bar('Processing', max=mm, suffix='%(index)d/%(max)d - %(percent).1f%% - %(eta)ds')
+    lineas = []
+    for path in paths.keys():
+        lineas.append(wayline(paths[path]))
+        bar.next()
+    bar.finish()
+    #lineas = [wayline(paths[path]) for path in paths.keys()]
 
     # pickle.dump(lineas, open("lineas.p", "wb"))
     # lineas = pickle.load(open("lineas.p", "rb"))
