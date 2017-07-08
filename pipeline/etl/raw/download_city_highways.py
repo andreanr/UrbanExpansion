@@ -7,8 +7,8 @@ import json
 import fiona
 import pandas as pd
 import geopandas as gpd
-import timeit
-import pdb
+import time
+# import pdb
 # import pickle
 
 from progress.bar import Bar # sudo pip install progress
@@ -128,7 +128,7 @@ def get_highways(bbox_city):
     print("Constructing geodataframe of highways.")
     df_paths = pd.DataFrame.from_dict(paths)
     df_paths = df_paths.transpose()
-    df_paths = df_paths[["osmid", "name", "aeroway", "bridge", "capacity", "highway", "religion", "tourism", "timestamp"]]
+    df_paths = df_paths.drop(['nodes'], axis = 1)
     gdf_paths = gpd.GeoDataFrame(df_paths)
     gdf_paths['geometry'] = lineas
     gdf_paths.crs = _crs
@@ -197,13 +197,14 @@ if __name__ == "__main__":
     pth = "/home/data/boundries/" + city_name + "_bbox.json"
     bbox_file = open(pth)
     bbox = json.load(bbox_file)
-    start = timeit.timeit()
-    pdb.set_trace()
+    start = time.time()
     nodes_highways, paths_highways = get_highways(bbox)
     pth = "/home/data/highways/" + city_name + "_highways.shp"
     paths_highways.to_file(pth)
-    end = timeit.timeit()
-    t = str(end - start)
-    print("Download highways and converted to shapefile in " + t + " seconds")
-    print("Finished processing. Shapefiles saved at :" + pth)
+    end = time.time()
+    t = end - start
+    m, s = divmod(t, 60)
+    h, m = divmod(m, 60)
+    print('Download highways and converted to shapefile in %d:%02d:%02d.'.format(h, m, s))
+    print("Finished processing. Shapefiles saved at: " + pth)
 

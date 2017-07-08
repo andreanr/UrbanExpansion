@@ -43,3 +43,25 @@ def read_yaml(config_file_name):
     with open(config_file_name, 'r') as f:
         config = yaml.load(f)
     return config
+
+def make_str(value):
+    try:
+        return unicode(value)
+    except:
+        return str(value)
+
+def read_shapefile(filename='default.shp'):
+    """
+    read shapefile from specified directory and transform it
+    into a geodataframe
+    :param filename: str
+    :return: geodataframe
+    """
+
+    gdf = gpd.from_file(filename)
+
+    if not hasattr(gdf, 'gdf_name'):
+        gdf.gdf_name = 'unnamed'
+
+    return gdf
+
