@@ -14,14 +14,14 @@
 #    mean_built_lds: numeric
 #    stddev_built_lds: numeric
 #    sum_built_lds: numeric
-
-settlements:
-    year: int
-    min_settlements: numeric
-    max_settlements: numeric
-    mean_settlements: numeric
-    sum_settlements: numeric
-
+#
+#settlements:
+#    year: int
+#    min_settlements: numeric
+#    max_settlements: numeric
+#    mean_settlements: numeric
+#    sum_settlements: numeric
+#
 #population:
 #   year: int
 #   min_population: numeric
@@ -38,28 +38,32 @@ settlements:
 #   stddev_city_lights: numeric
 #   sum_city_lights: numeric
 #
-##urban_distance:
-##    year: int
-##    urban_distance_km: numeric
+built_distance:
+    year: int
+    year_model: int
+    built_flag: int
+    built_distance_km: numeric
 #
 ##urban_neighbours:
 ##    year: int
 ##    intersect_percent: numeric
 ##    urban_neighbours: int
 
-dem:
-    min_dem: numeric
-    max_dem: numeric
-    mean_dem: numeric
-    stddev_dem: numeric
+#dem:
+#    min_dem: numeric
+#    max_dem: numeric
+#    mean_dem: numeric
+#    stddev_dem: numeric
+#
+#slope:
+#    min_slope_pct: numeric
+#    max_slope_pct: numeric
+#    mean_slope_pct: numeric
+#    stddev_slope_pct: numeric
+#    min_slope_degrees: numeric
+#    max_slope_degrees: numeric
+#    mean_slope_degrees: numeric
+#    stddev_slope_degrees: numeric
 
-slope:
-    min_slope_pct: numeric
-    max_slope_pct: numeric
-    mean_slope_pct: numeric
-    stddev_slope_pct: numeric
-    min_slope_degrees: numeric
-    max_slope_degrees: numeric
-    mean_slope_degrees: numeric
-    stddev_slope_degrees: numeric
-
+highways:
+    distance_highways_km: numeric

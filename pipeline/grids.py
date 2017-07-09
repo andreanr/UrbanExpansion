@@ -8,11 +8,31 @@ def water_bodies(grid_size, city, esri, engine):
                             SELECT st_transform(geom, {esri}) as geom
                             FROM raw.{city}_water_bodies)
                         SELECT cell_id,
-                                min(ST_Distance(geom, st_centroid(cell))) / 1000
+                                min(ST_Distance(geom, st_centroid(cell))) / 1000.0
                                         AS water_bodies_distance_km,
                                 CASE WHEN (min(ST_Distance(geom, st_centroid(cell))) / 1000.0)::float > 0
                                         THEN 0 ElSE 1 END as water_bodies_flag
                         FROM grids.{city}_grid_{size}, wat_tr
+                        GROUP BY cell_id""".format(city=city,
+                                                   size=grid_size,
+                                                   esri=esri))
+    db_conn = engine.raw_connection()
+    cur = db_conn.cursor()
+    cur.execute(QUERY_INSERT)
+    db_conn.commit()
+    db_conn.close()
+
+def highways(grid_size, city, esri, engine):
+    # insert query
+    QUERY_INSERT = (""" INSERT INTO grids.{city}_highways_{size}
+                        (cell_id, distance_highways_km)
+                        WITH highways_tr as (
+                            SELECT st_transform(geom, {esri}) AS geom
+                            FROM raw.{city}_highways )
+                        SELECT cell_id,
+                               min(ST_Distance(geom, st_centroid(cell))) / 1000.0
+                               AS distance_highways_km
+                        FROM grids.{city}_grid_{size}, highways_tr
                         GROUP BY cell_id""".format(city=city,
                                                    size=grid_size,
                                                    esri=esri))
@@ -98,23 +118,39 @@ def settlements(grid_size, city, time, esri, engine):
     db_conn.close()
 
 
-## TODO
-def urban_distance(grid_size, city, time, esri, engine):
-    QUERY = (""" INSERT INTO grids.{city}_urban_distance_{size}
-                (cell_id,
-                 year,
-                urban_distance_km)
-                SELECT cell_id,
-                       '{time}' AS "year",
-                      min(st_distance(geom, st_centroid(cell_geom))) / 1000.0
-                         AS urban_distance_min
-                FROM preprocess.{city}_urban_{time}, {schema}.{city}_grid
-                GROUP BY cell_id""".format(size=grid_size,
-                                           city=city,
-                                           time=time))
+def built_distance(grid_size, city, built_threshold, time, year_model, esri, engine):
+    QUERY_INSERT = ("""WITH built_urban AS (
+                    SELECT cell_id,
+                           cell,
+                           year,
+                           year_model,
+                           CASE when max_built_lds > {threshold} / 100.00
+                           THEN 1 ELSE 0 END as built
+                    FROM grids.{city}_built_lds_{size}
+                    JOIN grids.{city}_grid_{size}
+                    USING (cell_id)
+                    WHERE year_model = {year_model})
+               INSERT INTO grids.{city}_built_distance_{size}
+               (cell_id, year, year_model, built_flag,  built_distance_km)
+               SELECT gr.cell_id,
+                      {time} AS "year",
+                      {year_model} as year_model,
+                      CASE WHEN (min(ST_Distance(bu.cell, st_centroid(gr.cell))) / 1000.0)::float > 0
+                        THEN 0 else 1 end as built_flag,
+                      min(st_distance(bu.cell, st_centroid(gr.cell))) / 1000.0
+                        AS built_distance_km
+                FROM grids.{city}_grid_{size} as gr, built_urban bu
+                WHERE built = 1
+                GROUP BY gr.cell_id""".format(size=grid_size,
+                                            city=city,
+                                            threshold=built_threshold,
+                                            time=time,
+                                            year_model=year_model))
     db_conn = engine.raw_connection()
     cur = db_conn.cursor()
     cur.execute(QUERY_INSERT)
+    db_conn.commit()
+    db_conn.close()
 
 
 ## TODO
@@ -300,14 +336,18 @@ if __name__ == "__main__":
     grid_size = 250
     city = 'amman'
     esri = 32236
-    time = 2013
+    time = 2014
+    built_threshold = 40
+    year_model = 2014
     engine = utils.get_engine()
     #print('water bodies')
     #water_bodies(grid_size, city, esri, engine)
     #print('urban_center')
     #urban_center(grid_size, city, esri, engine)
-    print('slope')
-    slope(grid_size, city, esri, engine)
+    #print('slope')
+    #slope(grid_size, city, esri, engine)
+    print('highways')
+    highways(grid_size, city, esri, engine)
     #print('built_lds')
     #built_lds(grid_size, city, time, esri, engine)
     #print('dem')
@@ -318,3 +358,5 @@ if __name__ == "__main__":
     #city_lights(grid_size, city, time, esri, engine)
     #print('settlements')
     #settlements(grid_size, city, time, esri, engine)
+    #print('built_distance')
+    #built_distance(grid_size, city, built_threshold, time, year_model, esri, engine)
