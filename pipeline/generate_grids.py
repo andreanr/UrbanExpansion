@@ -161,6 +161,28 @@ def generate_table(engine, city, grid_size, name, columns_dict):
     db_conn.commit()
     db_conn.close()
 
+def generate_urban_center_table(engine, city, grid_size):
+    db_conn = engine.raw_connection()
+    cur = db_conn.cursor()
+    DROP_QUERY = ("""DROP TABLE IF EXISTS grids.{city}_urban_clusters_{size} CASCADE"""
+                    .format(city=city,
+                            size=grid_size))
+    cur.execute(DROP_QUERY)
+    db_conn.commit()
+
+    QUERY = ("""CREATE TABLE grids.{city}_urban_clusters_{size}
+                (cluster_id INT,
+                 year_model INT,
+                 population numeric,
+                 built_threshold numeric,
+                 population_threshold numeric,
+                 geom geometry)""".format(city=city,
+                                          size=grid_size))
+
+    cur.execute(QUERY)
+    db_conn.commit()
+    db_conn.close()
+
 if __name__ == "__main__":
     yaml_file = 'grid_tables.yaml'
     city = 'amman'
@@ -170,6 +192,6 @@ if __name__ == "__main__":
     # connection
     engine = utils.get_engine()
     generate_grid(city, esri, grid_size, engine)
-
+    generate_urban_center_table(engine, city, grid_size)
     for table, cols in tables.items():
         q = generate_table(engine, city, grid_size, table, cols)

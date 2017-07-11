@@ -43,6 +43,40 @@ def highways(grid_size, city, esri, engine):
     db_conn.close()
 
 
+def geopins(grid_size, city, esri, engine):
+   QUERY_INSERT = (""" INSERT INTO grids.{city}_geopins_{size}
+                       (cell_id, worship_distance, school_distance,
+                        university_distance, hospital_distance, aeroway_distance)
+                      WITH geopins_tr as (
+                           SELECT amenity, aeroway, st_transform(geom, {esri}) as geom
+                           FROM raw.{city}_geopins )
+                      SELECT cell_id,
+                             min(CASE WHEN ammenity IN ('place of worship')
+                                   THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
+                                  ELSE NULL END) AS worship_distance,
+                             min(CASE WHEN  ammenity  IN ('school')
+                                     THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
+                                     ELSE NULL END) AS school_distance,
+                             min(CASE WHEN ammenity  IN ('university')
+                                     THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
+                                     ELSE NULL END) AS university_distance,
+                             min(CASE WHEN ammenity  IN ('hospital')
+                                     THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
+                                     ELSE NULL END) AS hospital_distance,
+                             min(CASE WHEN  aeroway IS NOT NULL
+                                     THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
+                                     ELSE NULL END) AS aeroway_distance
+                     FROM grids.{city}_grid_{size}, geopoints_tr
+                     GROUP BY cell_id""".format(city=city,
+                                                size=grid_size,
+                                                esri=esri))
+    db_conn = engine.raw_connection()
+    cur = db_conn.cursor()
+    cur.execute(QUERY_INSERT)
+    db_conn.commit()
+    db_conn.close()
+
+
 def urban_center(grid_size, city, esri, engine):
     # insert query
     QUERY_INSERT = (""" INSERT INTO grids.{city}_urban_center_{size}
@@ -117,34 +151,72 @@ def settlements(grid_size, city, time, esri, engine):
     db_conn.commit()
     db_conn.close()
 
+def urban_clusters(grid_size, city, built_threshold, population_threshold, year_model, engine):
+    QUERY_INSERT = (""" WITH urban AS (SELECT 
+                            (ST_Dump(st_union(cell))).geom AS cell_cluster
+                             FROM grids.{city}_built_lds_{size}
+                              JOIN grids.{city}_population_{size}
+                              USING (cell_id, year_model)
+                              JOIN grids.{city}_grid_{size}
+                              USING (cell_id)
+                              WHERE year_model = {year_model}
+                              AND max_built_lds > {built_threshold} / 100.00
+                              AND max_population >= {population_threshold}
+                        ), urban_population AS ( 
+                            SELECT cell_cluster,
+                                  sum(mean_population) AS population
+                            FROM grids.{city}_population_{size}
+                            JOIN grids.{city}_grid_{size}
+                            USING (cell_id)
+                            JOIN urban
+                            ON st_within(cell, cell_cluster)
+                            GROUP BY cell_cluster)
+                        INSERT INTO grids.{city}_urban_clusters_{size}
+                        (cluster_id, year_model, population, built_threshold, population_threshold, geom)
+                        SELECT ROW_NUMBER() OVER (ORDER BY cell_cluster) AS cluster_id,
+                        {year_model} as year_model,
+                        population,
+                        {built_threshold} as built_threshold,
+                        {population_threshold} as population_threshold,
+                        cell_cluster as geom
+                        FROM urban_population
+                        """.format(city=city,
+                                   size=grid_size,
+                                   built_threshold=built_threshold,
+                                   population_threshold=population_threshold,
+                                   year_model=year_model))
 
-def built_distance(grid_size, city, built_threshold, time, year_model, esri, engine):
-    QUERY_INSERT = ("""WITH built_urban AS (
-                    SELECT cell_id,
-                           cell,
-                           year,
-                           year_model,
-                           CASE when max_built_lds > {threshold} / 100.00
-                           THEN 1 ELSE 0 END as built
-                    FROM grids.{city}_built_lds_{size}
-                    JOIN grids.{city}_grid_{size}
-                    USING (cell_id)
-                    WHERE year_model = {year_model})
-               INSERT INTO grids.{city}_built_distance_{size}
-               (cell_id, year, year_model, built_flag,  built_distance_km)
-               SELECT gr.cell_id,
-                      {time} AS "year",
+    db_conn = engine.raw_connection()
+    cur = db_conn.cursor()
+    cur.execute(QUERY_INSERT)
+    db_conn.commit()
+    db_conn.close()
+
+                                                                             
+def urban_distance(grid_size, city, built_threshold, population_threshold, cluster_threshold, 
+                           year_model, engine):
+    QUERY_INSERT = ("""INSERT INTO grids.{city}_urban_distance_{size}
+               (cell_id, year_model, built_threshold, population_threshold, cluster_threshold,
+                    urban_flag,  urban_distance_km)
+               SELECT cell_id,
                       {year_model} as year_model,
-                      CASE WHEN (min(ST_Distance(bu.cell, st_centroid(gr.cell))) / 1000.0)::float > 0
-                        THEN 0 else 1 end as built_flag,
-                      min(st_distance(bu.cell, st_centroid(gr.cell))) / 1000.0
-                        AS built_distance_km
-                FROM grids.{city}_grid_{size} as gr, built_urban bu
-                WHERE built = 1
-                GROUP BY gr.cell_id""".format(size=grid_size,
+                      {built_threshold},
+                      {population_threshold},
+                      {cluster_threshold},
+                      CASE WHEN (min(ST_Distance(geom, st_centroid(cell))) / 1000.0)::float > 0
+                        THEN 0 else 1 end as urban_flag,
+                      min(st_distance(geom, st_centroid(cell))) / 1000.0
+                        AS urban_distance_km
+                FROM grids.{city}_grid_{size}, grids.{city}_urban_clusters_{size}
+                WHERE built_threshold = {built_threshold}
+                AND year_model = {year_model}
+                AND population_threshold = {population_threshold}
+                AND population >= {cluster_threshold}
+                GROUP BY cell_id""".format(size=grid_size,
                                             city=city,
-                                            threshold=built_threshold,
-                                            time=time,
+                                            built_threshold=built_threshold,
+                                            population_threshold=population_threshold,
+                                            cluster_threshold=cluster_threshold,
                                             year_model=year_model))
     db_conn = engine.raw_connection()
     cur = db_conn.cursor()
@@ -154,53 +226,47 @@ def built_distance(grid_size, city, built_threshold, time, year_model, esri, eng
 
 
 ## TODO
-def urban_neighbours(city, time, grid_size, esri, intersect_percent, engine):
-    SUBQUERY = ("""WITH intersect_{time} AS (
-                    SELECT  cell_id,
-                            cell_geom,
-                            sum(st_area(ST_Intersection(geom, cell_geom)) / st_area(cell_geom)) as porcentage_ageb_share
-                FROM grids.{city}_grid_{size}
-                LEFT JOIN preprocess.urban_{city}_{time}
-                ON st_intersects(cell_geom, geom)
-                 GROUP BY cell_id
-            ),zu_{time} AS (
-                SELECT  cell_id,
-                        cell_geom,
-                        CASE WHEN  porcentage_ageb_share >= {percent}/100.0
-                                    THEN 1 ELSE 0 END AS urbano
-                FROM intersect_{time}
-            ), vecinos_{time} AS (
-                SELECT  cell_id,
-                        cell_geom,
-                        ARRAY(SELECT p.urbano
-                              FROM zu_{time} p
-                       WHERE ST_Touches(b.cell_geom, p.cell_geom)
-                       AND b.cell_id <> p.cell_id) AS urban_neighbours
-                FROM grids.{city}_grid_{size} b
-            )""".format(size=grid_size,
-                        city=city,
-                        time=time,
-                        percent=intersect_percent))
-
-    INSERT_QUERY = (""" INSERT INTO grids.{city}_urban_neighbours_{size}
-                        (cell_id,
-                         year,
-                         intersect_percent,
-                         urban_neighbours)
-                    SELECT cell_id,
-                          '{time}'::TEXT as year,
-                           {percent} as intersect_percent,
-                          (SELECT SUM(s) FROM UNNEST(urban_neighbours) s)
-                    FROM vecinos_{time}""".format(size=grid_size,
-                                                  city=city,
-                                                  time=time,
-                                                  percent=intersect_percent))
-
-    QUERY = SUBQUERY + INSERT_QUERY
+def urban_neighbours(grid_size, city, built_threshold, population_threshold, cluster_threshold,
+                           year_model, engine):
+    QUERY_INSERT = (""" WITH urban_temp AS (
+                             SELECT cell_id,
+                                    CASE WHEN ST_within(cell, geom) 
+                                       THEN 1 else 0 end as urban_flag,
+                                   cell
+                             FROM grids.{city}_grid_{size}, grids.{city}_urban_clusters_{size}
+                             WHERE built_threshold = {built_threshold}
+                             AND year_model = {year_model}
+                             AND population_threshold = {population_threshold}
+                             AND population >= {cluster_threshold}
+                      ), vecinos AS (
+                             SELECT  cell_id,
+                                     cell,
+                                     ARRAY(SELECT p.urban_flag
+                                           FROM urban_temp p
+                                           WHERE ST_Touches(b.cell, p.cell)
+                                           AND b.cell_id <> p.cell_id) AS urban_neighbours
+                            FROM grids.{city}_grid_{size} b
+                      )
+                      INSERT INTO grids.{city}_urban_neighbours_{size}
+                      (cell_id, year_model, built_threshold, population_threshold,
+                       cluster_threshold, urban_neighbours) 
+                      SELECT cell_id,
+                               {year_model} as year_model,
+                               {built_threshold} AS built_threshold,
+                               {population_threshold} AS population_threshold,
+                               {cluster_threshold} AS cluster_threshold,     
+                               (SELECT SUM(s) FROM UNNEST(urban_neighbours) s)
+                      FROM vecinos""".format(city=city,
+                                             size=grid_size,
+                                             year_model=year_model,
+                                             built_threshold=built_threshold,
+                                             population_threshold= population_threshold,
+                                             cluster_threshold=cluster_threshold))
     db_conn = engine.raw_connection()
     cur = db_conn.cursor()
-    cur.execute(QUERY)
-
+    cur.execute(QUERY_INSERT)
+    db_conn.commit()
+    db_conn.close()
 
 def population(grid_size, city, time, esri, engine):
     QUERY_INSERT = (""" WITH pop_tr AS (
@@ -336,18 +402,22 @@ if __name__ == "__main__":
     grid_size = 250
     city = 'amman'
     esri = 32236
-    time = 2014
-    built_threshold = 40
-    year_model = 2014
+    time = 1990
+    built_threshold = 50
+    population_threshold = 75
+    cluster_threshold = 5000
+    year_model = 1990
     engine = utils.get_engine()
     #print('water bodies')
     #water_bodies(grid_size, city, esri, engine)
+    print(geopins)
+    geopins(grid_size, city, esri, engine)
     #print('urban_center')
     #urban_center(grid_size, city, esri, engine)
     #print('slope')
     #slope(grid_size, city, esri, engine)
-    print('highways')
-    highways(grid_size, city, esri, engine)
+    #print('highways')
+    #highways(grid_size, city, esri, engine)
     #print('built_lds')
     #built_lds(grid_size, city, time, esri, engine)
     #print('dem')
@@ -358,5 +428,11 @@ if __name__ == "__main__":
     #city_lights(grid_size, city, time, esri, engine)
     #print('settlements')
     #settlements(grid_size, city, time, esri, engine)
+    #print('urban cluster')
+    #urban_clusters(grid_size, city, built_threshold, population_threshold, year_model, engine)
     #print('built_distance')
     #built_distance(grid_size, city, built_threshold, time, year_model, esri, engine)
+    #print('urban distance')
+    #urban_distance(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine) 
+    print('urban neighbours')
+    urban_neighbours(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine)
