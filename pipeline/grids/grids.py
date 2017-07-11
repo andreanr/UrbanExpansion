@@ -44,29 +44,29 @@ def highways(grid_size, city, esri, engine):
 
 
 def geopins(grid_size, city, esri, engine):
-   QUERY_INSERT = (""" INSERT INTO grids.{city}_geopins_{size}
+    QUERY_INSERT = (""" INSERT INTO grids.{city}_geopins_{size}
                        (cell_id, worship_distance, school_distance,
                         university_distance, hospital_distance, aeroway_distance)
                       WITH geopins_tr as (
                            SELECT amenity, aeroway, st_transform(geom, {esri}) as geom
                            FROM raw.{city}_geopins )
                       SELECT cell_id,
-                             min(CASE WHEN ammenity IN ('place of worship')
+                             min(CASE WHEN amenity IN ('place of worship')
                                    THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
                                   ELSE NULL END) AS worship_distance,
-                             min(CASE WHEN  ammenity  IN ('school')
+                             min(CASE WHEN  amenity  IN ('school')
                                      THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
                                      ELSE NULL END) AS school_distance,
-                             min(CASE WHEN ammenity  IN ('university')
+                             min(CASE WHEN amenity  IN ('university')
                                      THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
                                      ELSE NULL END) AS university_distance,
-                             min(CASE WHEN ammenity  IN ('hospital')
+                             min(CASE WHEN amenity  IN ('hospital')
                                      THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
                                      ELSE NULL END) AS hospital_distance,
                              min(CASE WHEN  aeroway IS NOT NULL
                                      THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
                                      ELSE NULL END) AS aeroway_distance
-                     FROM grids.{city}_grid_{size}, geopoints_tr
+                     FROM grids.{city}_grid_{size}, geopins_tr
                      GROUP BY cell_id""".format(city=city,
                                                 size=grid_size,
                                                 esri=esri))
@@ -434,5 +434,5 @@ if __name__ == "__main__":
     #built_distance(grid_size, city, built_threshold, time, year_model, esri, engine)
     #print('urban distance')
     #urban_distance(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine) 
-    print('urban neighbours')
-    urban_neighbours(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine)
+    #print('urban neighbours')
+    #urban_neighbours(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine)
