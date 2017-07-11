@@ -20,6 +20,7 @@ unzip -o -d $DATADIR/population/$YEAR/ $DATADIR/population/$YEAR/GHS_POP_GPW4${Y
 echo 'transform Countries'
 ogr2ogr -t_srs EPSG:54009 ${DATADIR}/boundries/${CITY}_54009.shp ${DATADIR}/boundries/${CITY}.shp
 
+##.... aqui
 echo 'cutting border'
 gdalwarp -cutline ${DATADIR}/boundries/${CITY}_54009.shp -crop_to_cutline -dstalpha $DATADIR/population/$YEAR/GHS_POP_GPW4${YEAR}_GLOBE_R2015A_54009_250_v1_0/*.tif ${DATADIR}/population/$YEAR/population_${CITY}_54009.tif 
 
