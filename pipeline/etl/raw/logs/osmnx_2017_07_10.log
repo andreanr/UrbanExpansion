@@ -1,0 +1,6 @@
+2017-07-10 18:04:35,607 INFO osmnx Configured osmnx
+2017-07-10 18:04:35,635 INFO osmnx Retrieved response from cache file "cache/aeaad0e5d94be13f13b28fe9ed8cb6f5.json" for URL "https://nominatim.openstreetmap.org/search?format=json&limit=1&dedupe=0&polygon_geojson=1&city=amman"
+2017-07-10 18:04:35,649 INFO osmnx Projected the GeoDataFrame "amman" to UTM-36 in 0.01 seconds
+2017-07-10 18:04:35,660 INFO osmnx Projected the GeoDataFrame "amman" to EPSG 4326 in 0.00 seconds
+2017-07-10 18:04:35,660 INFO osmnx Buffered the GeoDataFrame "amman" to 25000 meters
+2017-07-10 18:04:35,660 INFO osmnx Created GeoDataFrame with 1 row for query "{'city': 'amman'}"
