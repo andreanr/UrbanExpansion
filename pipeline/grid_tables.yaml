@@ -38,14 +38,27 @@ city_lights:
    stddev_city_lights: numeric
    sum_city_lights: numeric
 
-#urban_distance:
-#    year: int
-#    urban_distance_km: numeric
+urban_distance:
+    year_model: int
+    built_threshold: numeric
+    population_threshold: numeric
+    cluster_threshold: numeric
+    urban_flag: int
+    urban_distance_km: numeric
 
-#urban_neighbours:
-#    year: int
-#    intersect_percent: numeric
-#    urban_neighbours: int
+urban_neighbours:
+    year_model: int
+    built_threshold: numeric
+    population_threshold: numeric
+    cluster_threshold: numeric
+    urban_neighbours: int
+
+geopins:
+     worship_distance: numeric
+     school_distance: numeric
+     university_distance: numeric
+     hospital_distance: numeric
+     aeroway_distance: numeric
 
 dem:
     min_dem: numeric
@@ -63,3 +76,5 @@ slope:
     mean_slope_degrees: numeric
     stddev_slope_degrees: numeric
 
+highways:
+    distance_highways_km: numeric
