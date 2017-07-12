@@ -140,6 +140,41 @@ def store_predictions(db_engine,
     return True
 
 
+def store_evaluations(engine, model_id, city, year_test, metrics):
+    db_conn = engine.raw_connection()
+    for key in all_metrics:
+        evaluation = all_metrics[key]
+        metric = key.split('|')[0]
+        try:
+            metric_cutoff = key.split('|')[1]
+            if metric_cutoff == '':
+                metric_cutoff.replace('', None)
+            else:
+                pass
+        except:
+            metric_cutoff = None
+
+        # store
+        if metric_cutoff is None:
+            metric_cutoff = 'Null'
+        query = ("""INSERT INTO results.evaluations(model_id,
+                                                    city,
+                                                    year_test,
+                                                    metric,
+                                                    cutoff,
+                                                    value)
+                   VALUES( {0}, '{1}', {2}, '{3}', {4}, {5}) """
+                   .format( model_id,
+                            city,
+                            year_test,
+                            metric,
+                            metric_cutoff,
+                            evaluation ))
+
+        db_conn.cursor().execute(query)
+        db_conn.commit()
+
+
 def define_model(model, parameters, n_cores):
     if model == "RandomForest":
         return ensemble.RandomForestClassifier(

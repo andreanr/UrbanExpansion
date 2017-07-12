@@ -95,16 +95,23 @@ def gen_models_to_run(engine, city,
                                          test_x.index,
                                          test_x['scores'],
                                          test_y)
+                metrics = scoring.calculate_all_evaluation_metrics(test_y.tolist(),
+                                                                   test_x['scores'].tolist())
+                mu.store_evaluations(engine,
+                                     model_id,
+                                     city,
+                                     year_test,
+                                     metrics)
 
             print('predicting')
             if year_predict:
                 predict_x, predict_y  = mu.get_data(engine,
                                                     year_predict,
                                                     city,
-                                                       features,
-                                                       grid_size,
-                                                       features_table_prefix,
-                                                       labels_table_prefix)
+                                                    features,
+                                                    grid_size,
+                                                    features_table_prefix,
+                                                    labels_table_prefix)
                 predict_x['scores'] = predict_model(modelobj, predict_x)
                 mu.store_predictions(engine,
                                      model_id,
