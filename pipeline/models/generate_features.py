@@ -23,13 +23,14 @@ def generate_features(engine,
 
     # select statement of features
     selects = ["COALESCE({x},0) AS {x}".format(x=f)
-                                      for f in features if 'urban' not in f
+                                      for f in features if 'urban_flag' not in f
+                                      and 'urban_distance_km' not in f
                                       and 'high_density_distance' not in f]
     # urbans
     if 'high_density_distance_km' in features:
-        selects.append("COALESCE(u2.urban_distance_km, 0) AS high_density_distance")
+        selects.append("COALESCE(u2.urban_distance_km, 0) AS high_density_distance_km")
     if 'urban_distance_km' in features:
-        selects.append("COALESCE(u1.urban_distance_km, 0) AS urban_distance")
+        selects.append("COALESCE(u1.urban_distance_km, 0) AS urban_distance_km")
     if 'urban_flag' in features:
         selects.append("COALESCE(u1.urban_flag, 0) AS urban_flag")
 
@@ -181,17 +182,17 @@ if __name__ == "__main__":
     # engine
     engine = utils.get_engine()
     # run features
-    #generate_features(engine,
-    #                  city,
-    #                  features,
-    #                  features_table_name,
-    #                  grid_size,
-    #                  urban_built_threshold,
-    #                  urban_population_threshold,
-    #                  urban_cluster_threshold,
-    #                  dense_built_threshold,
-    #                  dense_population_threshold,
-    #                  dense_cluster_threshold)
+    generate_features(engine,
+                      city,
+                      features,
+                      features_table_name,
+                      grid_size,
+                      urban_built_threshold,
+                      urban_population_threshold,
+                      urban_cluster_threshold,
+                      dense_built_threshold,
+                      dense_population_threshold,
+                      dense_cluster_threshold)
     generate_labels(engine,
                     city,
                     labels_table_name,
