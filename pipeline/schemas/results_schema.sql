@@ -42,5 +42,5 @@ CREATE TABLE results.evaluations (
   year_test  INT,
   metric     TEXT,
   cutoff     TEXT,
-  value      REAL,
+  value      REAL
 );

@@ -6,48 +6,10 @@ import statistics
 from sklearn import metrics
 
 
-def compute_AUC(test_labels, test_predictions):
-    fpr, tpr, thresholds = metrics.roc_curve(
-        test_labels, test_predictions, pos_label=1)
-    return metrics.auc(fpr, tpr)
-
-
-def compute_avg_false_positive_rate(test_labels, test_predictions):
-    fpr, tpr, thresholds = metrics.roc_curve(
-        test_labels, test_predictions, pos_label=1)
-    return statistics.mean(fpr)
-
-
-def compute_avg_true_positive_rate(test_labels, test_predictions):
-    fpr, tpr, thresholds = metrics.roc_curve(
-        test_labels, test_predictions, pos_label=1)
-
-    return statistics.mean(tpr)
-
-def generate_binary_at_x(test_predictions):
+def generate_binary_at_x(test_predictions, cutoff):
     test_predictions_binary = [1 if x < cutoff else 0 for x in test_predictions]
     return test_predictions_binary
 
-
-def precision_at_x(test_labels, test_prediction_binary_at_x):
-    """Return the precision at a specified percent cutoff
-    Args:
-        test_labels: ground truth labels for the predicted data
-        test_predictions: prediction labels
-        x_proportion: the percent of the prediction population to label. Must be between 0 and 1.
-    """
-    precision, _, _, _ = metrics.precision_recall_fscore_support(
-        test_labels, test_prediction_binary_at_x)
-    precision = precision[1]  # only interested in precision for label 1
-
-    return precision
-
-def recall_at_x(test_labels, test_prediction_binary_at_x):
-    _, recall, _, _ = metrics.precision_recall_fscore_support(
-        test_labels,test_prediction_binary_at_x)
-    recall = recall[1]  # only interested in precision for label 1
-
-    return recall
 
 def confusion_matrix_at_x(test_labels, test_prediction_binary_at_x):
     """
@@ -73,7 +35,7 @@ def confusion_matrix_at_x(test_labels, test_prediction_binary_at_x):
 
 
 def calculate_all_evaluation_metrics( test_label, test_predictions):
-   """ Calculate several evaluation metrics using sklearn for a set of
+    """ Calculate several evaluation metrics using sklearn for a set of
         labels and predictions.
     :param list test_labels: list of true labels for the test data.
     :param list test_predictions: list of risk scores for the test data.
@@ -93,16 +55,19 @@ def calculate_all_evaluation_metrics( test_label, test_predictions):
                .65, .7, .75, .8, .85, .9]
     for cutoff in cutoffs:
         test_predictions_binary_at_x = generate_binary_at_x(test_predictions, cutoff)
-        # precision
-        all_metrics["precision@|{}".format(str(cutoff))] = precision_at_x(test_label, test_predictions_binary_at_x)
-        # recall
-        all_metrics["recall@|{}".format(str(cutoff)] = recall_at_x(test_label, test_predictions_binary_at_x)
-        # confusion matrix
         TP, TN, FP, FN = confusion_matrix_at_x(test_label,  test_predictions_binary_at_x)
         all_metrics["true positives@|{}".format(str(cutoff))] = TP
         all_metrics["true negatives@|{}".format(str(cutoff))] = TN
         all_metrics["false positives@|{}".format(str(cutoff))] = FP
         all_metrics["false negatives@|{}".format(str(cutoff))] = FN
+        # precision
+        all_metrics["precision@|{}".format(str(cutoff))] = TP / ((TP + FP) * 1.0)
+        # recall
+        all_metrics["recall@|{}".format(str(cutoff))] = TP / ((TP + FN) * 1.0)
+        # f1 score
+        all_metrics["f1@|{}".format(str(cutoff))] = (2* TP) / ((2*TP + FP + FN)*1.0)
+        # accuracy
+        all_metrics["auc@|{}".format(str(cutoff))] = (TP + TN) / ((TP + TN + FP + FN)*1.0)
     return all_metrics
 
 

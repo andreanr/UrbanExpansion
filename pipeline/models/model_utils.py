@@ -142,8 +142,8 @@ def store_predictions(db_engine,
 
 def store_evaluations(engine, model_id, city, year_test, metrics):
     db_conn = engine.raw_connection()
-    for key in all_metrics:
-        evaluation = all_metrics[key]
+    for key in metrics:
+        evaluation = metrics[key]
         metric = key.split('|')[0]
         try:
             metric_cutoff = key.split('|')[1]

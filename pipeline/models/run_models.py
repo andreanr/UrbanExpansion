@@ -9,6 +9,7 @@ from sklearn import (svm, ensemble, tree,
                      linear_model, neighbors, naive_bayes)
 
 import model_utils as mu
+import scoring
 
 import os,sys,inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -171,7 +172,7 @@ if __name__ == '__main__':
     features_table_name = 'features'
     years = [1990, 2000, 2014]
     labels_table_name = 'labels'
-    model_comment = 'test'
+    model_comment = 'run1'
 
     # read experiment
     experiment_path = '../experiment.yaml'
