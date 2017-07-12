@@ -23,6 +23,8 @@ for z in *.tgz; do tar -xvzf $z; done
 # Remove temp file
 rm temp.txt
 
+
+####--- aqui
 # Cut raster to shp
 for z in *.tif; do 
 	gdalwarp -cutline ${DATADIR}/boundries/${CITY}.shp -crop_to_cutline -dstalpha $z ${DATADIR}/city_lights/$YEAR/${z}_${CITY}.tif

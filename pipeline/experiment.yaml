@@ -1,0 +1,80 @@
+
+Features:
+    # Topographical
+    min_slope_pct: False
+    mean_slope_pct: False
+    max_slope_pct: True
+    stddev_slope_pct: False
+    min_dem: False
+    mean_dem: False
+    max_dem: False
+    stddev_dem: False
+
+    # Settlements
+    min_settlements: False
+    mean_settlements: False
+    max_settlements: False
+    sum_settlements: False
+
+    # Economical
+    min_city_lights: False
+    mean_city_lights: True
+    max_city_lights: False
+    sum_city_lights: False
+    stddev_city_lights: False
+
+    # Built
+    min_built_lds: False
+    mean_built_lds: False
+    max_built_lds: True
+    stddev_built_lds: False
+    sum_built_lds: False
+    built_flag: False
+    built_distance_km: False
+
+    # Geopins / Highways OSM
+    university_distance: True
+    school_distance: True
+    hospital_distance: True
+    worship_distance: True
+    aeroway_distance: True
+    distance_highways_km: True
+
+    # Population
+    min_population: False
+    mean_population: True
+    max_population: False
+    stddev_population: False
+    sum_population: False
+
+    # Water bodies
+    water_bodies_distance_km: True
+    water_bodies_flag: True
+
+    # Urban Clusters
+    urban_center_distance_km: True
+    urban_flag: True
+    urban_distance_km: True
+    high_density_distance_km: True
+    urban_neighbours: False
+
+models: ['RandomForest', 'ExtraTrees', 'LogisticRegression']
+parameters:
+    RandomForest:
+        n_estimators: [10, 50, 100, 500, 1000, 5000, 10000]
+        max_depth: [5, 10, 50] #,5,10] #[100, 5, 10, 50]
+        max_features: ['sqrt'] #, 'sqrt'] # ['log2', 2, 4, 8, 16, "auto"]
+        criterion: ['gini'] #, 'entropy']
+        min_samples_split: [2,5,10] #[2,5,10]
+        random_state: [2193]
+    ExtraTrees:
+        n_estimators: [10, 50, 100, 500, 1000, 5000,10000] #[ 25, 50, 100, 1000, 10000, 50000, 100000]
+        max_depth: [2,5,10] #[5, 10, 50, 100 ]
+        max_features: ['sqrt'] #, 'sqrt'] # [4, 8, 16, "auto"]
+        criterion: ['gini'] #, 'entropy'] #, 'entropy']
+        min_samples_split: [2,5,10] #[2, 5, 10] #, 5, 10]
+        random_state: [2193]
+    LogisticRegression:
+        C_reg: [ 0.001, 0.01, 1]  # [1, 10]
+        penalty: ['l1', 'l2']
+        random_state: [2193]

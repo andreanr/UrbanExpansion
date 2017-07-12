@@ -26,7 +26,7 @@ def get_engine():
 
     url = 'postgresql://{user}:{passwd}@{host}:{port}/{db}'.format(
         user=user, passwd=password, host=host, port=port, db=database)
-    engine = create_engine(url, poolclass=NullPool)
+    engine = create_engine(url)
     return engine
 
 
