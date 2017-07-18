@@ -7,7 +7,7 @@ from sklearn import metrics
 
 
 def generate_binary_at_x(test_predictions, cutoff):
-    test_predictions_binary = [1 if x < cutoff else 0 for x in test_predictions]
+    test_predictions_binary = [1 if x >= cutoff else 0 for x in test_predictions]
     return test_predictions_binary
 
 
@@ -61,11 +61,11 @@ def calculate_all_evaluation_metrics( test_label, test_predictions):
         all_metrics["false positives@|{}".format(str(cutoff))] = FP
         all_metrics["false negatives@|{}".format(str(cutoff))] = FN
         # precision
-        all_metrics["precision@|{}".format(str(cutoff))] = TP / ((TP + FP) * 1.0)
+        all_metrics["precision@|{}".format(str(cutoff))] = [TP / ((TP + FP) * 1.0) if (TP + FP) > 0 else 'Null'][0]
         # recall
-        all_metrics["recall@|{}".format(str(cutoff))] = TP / ((TP + FN) * 1.0)
+        all_metrics["recall@|{}".format(str(cutoff))] = [TP / ((TP + FN) * 1.0) if (TP + FN)> 0 else 'Null'][0]
         # f1 score
-        all_metrics["f1@|{}".format(str(cutoff))] = (2* TP) / ((2*TP + FP + FN)*1.0)
+        all_metrics["f1@|{}".format(str(cutoff))] = [(2* TP) / ((2*TP + FP + FN)*1.0) if (TP + FP + FN) > 0 else 'Null'][0]
         # accuracy
         all_metrics["auc@|{}".format(str(cutoff))] = (TP + TN) / ((TP + TN + FP + FN)*1.0)
     return all_metrics
