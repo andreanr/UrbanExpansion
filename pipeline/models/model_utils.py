@@ -18,7 +18,13 @@ def get_data(db_engine,
              grid_size,
              features_table_prefix,
              labels_table_prefix):
+    """
+    Function that given the citu, the grid size, the year,
+    the features table prefix, labels table prefix and
+    the selected features specified on the experiment yaml it
+    returns a dataframe of features and labels to run models
 
+    """
     features_table_name = '{city}_{prefix}_{size}'.format(city=city,
                                                           prefix=features_table_prefix,
                                                           size=grid_size)
@@ -43,8 +49,7 @@ def get_data(db_engine,
     data.set_index('cell_id', inplace=True)
     return data.ix[:, data.columns != 'label'], data['label']
 
-def store_train(db_engine,
-                timestamp,
+def store_train(timestamp,
                 model,
                 city,
                 parameters,
@@ -55,6 +60,10 @@ def store_train(db_engine,
                 population_threshold,
                 cluster_threshold,
                 model_comment):
+    """
+    Function that stores all train information
+    for each model on results.models on the database
+    """
 
     query = (""" INSERT INTO results.models (run_time,
                                              city,
@@ -88,13 +97,15 @@ def store_train(db_engine,
                                                       population_threshold=population_threshold,
                                                       cluster_threshold=cluster_threshold,
                                                       model_comment=model_comment))
-    db_conn = db_engine.raw_connection()
-    cur = db_conn.cursor()
-    cur.execute(query)
-    db_conn.commit()
+    return query
 
 
 def get_model_id(db_engine, model, city, parameters, timestamp):
+    """
+    Function that given the model, city, parameters and timestamp
+    returns the model id (int) of the train model stored on
+    results.models
+    """
     db_conn = db_engine.raw_connection()
     query_model_id = ("""SELECT model_id as id from results.models
                          WHERE run_time ='{timestamp}'::timestamp
@@ -110,13 +121,17 @@ def get_model_id(db_engine, model, city, parameters, timestamp):
     return model_id['id'].iloc[0]
 
 def store_importances(db_engine, model_id, city, features, importances):
-
+    """
+    Functions that stores all the feature importantes for each model
+    on the db on results.feature_importances
+    """
     # Create pandas db of features importance
-    dataframe_for_insert = pd.DataFrame( {  "model_id": model_id,
-                                            "city": city,
-                                            "feature": features,
-                                            "feature_importance": importances})
+    dataframe_for_insert = pd.DataFrame( {"model_id": model_id,
+                                          "city": city,
+                                          "feature": features,
+                                          "feature_importance": importances})
 
+    # generate ranks
     dataframe_for_insert['rank_abs'] = dataframe_for_insert['feature_importance'].rank(method='dense',
                                                                                        ascending=False)
     dataframe_for_insert.to_sql("feature_importances",
@@ -134,13 +149,18 @@ def store_predictions(db_engine,
                       cell_id,
                       scores,
                       test_y):
-
+    """
+    Stores predictions made for each model
+    on the database on results.predictions
+    """
+    # Create pandas db of features importance
     dataframe_for_insert = pd.DataFrame( {"model_id": model_id,
                                           "city": city,
                                           "year_test": year_test,
                                           "cell_id": cell_id,
                                           "score": scores,
                                           "label": test_y})
+    # round score value
     dataframe_for_insert['score'] = dataframe_for_insert['score'].apply(lambda x: round(x,5))
     dataframe_for_insert.to_sql("predictions",
                                 db_engine,
@@ -152,6 +172,10 @@ def store_predictions(db_engine,
 
 
 def store_evaluations(engine, model_id, city, year_test, metrics):
+    """
+    Functions that stores the evauation metric for the year test
+    on results.evaluations
+    """
     db_conn = engine.raw_connection()
     for key in metrics:
         evaluation = metrics[key]
@@ -187,6 +211,11 @@ def store_evaluations(engine, model_id, city, year_test, metrics):
 
 
 def define_model(model, parameters, n_cores):
+    """
+    Function that given the model name,
+    calls the model object with the
+    specifief parameters
+    """
     if model == "RandomForest":
         return ensemble.RandomForestClassifier(
             n_estimators=parameters['n_estimators'],

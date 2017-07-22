@@ -8,25 +8,18 @@ import model_utils
 from commons import city_task
 
 
-class TrainModels(luigi.Wrapper):
-    models = luigi.Parameter()
-    parameters = luigi.Parameter()
-
-    def requieres(self):
-        tasks = []
-        for model in self.models:
-            parameter_names = sorted(parameters[model])
-            parameter_values = [self.parameters[model][p] for p in parameter_names]
-            all_params = product(*parameter_values)
-            for each_param in all_params:
-                task.append(TrainModel(model=model, parameters=each_param))
-        yield tasks
-
-
 class TrainModel(city_task.FeaturesTask):
+    """
+    This class takes in the model name and
+    parameters as well as all city task parameters
+    to train, test, predict and store
+
+    Args:
+      model (str): model name
+      parameters (dict): dictionary for parameters to fit model
+    """
     model = luigi.Parameter()
     parameters = luigi.dictParameter()
-
     timestamp = datetime.datetime.now()
 
     def requirements(self):
@@ -35,14 +28,18 @@ class TrainModel(city_task.FeaturesTask):
 
     @property
     def query(self):
-       return model_utils.store_train(engine,
+        """
+        Returns the query for storing the
+        train information on results schema
+        """
+       return model_utils.store_train(
                              self.timestamp,
                              self.model,
                              self.city,
                              self.parameters,
                              self.features,
                              self.year_train,
-                            self.grid_size,
+                             self.grid_size,
                              self.urban_built_threshold,
                              self.urban_population_threshold,
                              self.urban_cluster_threshold,
@@ -52,7 +49,6 @@ class TrainModel(city_task.FeaturesTask):
         engine = utils.get_engine()
         connection = engine.connect()
         cursor = connection.cursor()
-        self.output().touch(connection)
 
         # commit and close connection
         connection.commit()
@@ -119,4 +115,32 @@ class TrainModel(city_task.FeaturesTask):
                                           predict_x['scores'],
                                           predict_y)
 
+
+class TrainModels(luigi.Wrapper):
+    """
+    Luigi Wrapper that loops across all models
+    and all combination of parameters specified
+    on the experiment yaml file
+
+    Args:
+        models (list): list of models to run
+        parameters (dict): combination of grid parameters
+                           for running the models
+    """
+    models = luigi.Parameter()
+    parameters = luigi.Parameter()
+
+    def requieres(self):
+        tasks = []
+        # loop through models list
+        for model in self.models:
+            parameter_names = sorted(parameters[model])
+            parameter_values = [self.parameters[model][p] for p in parameter_names]
+            all_params = product(*parameter_values)
+
+            # loop through combination of parameters for each model
+            for each_param in all_params:
+                task.append(TrainModel(model=model, parameters=each_param))
+
+        yield tasks
 
