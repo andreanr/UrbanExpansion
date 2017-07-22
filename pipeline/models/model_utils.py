@@ -93,8 +93,18 @@ def store_train(db_engine,
     cur.execute(query)
     db_conn.commit()
 
-    # return model_id
-    query_model_id = """SELECT model_id as id from results.models where run_time ='{timestamp}'::timestamp """.format(timestamp=timestamp)
+
+def get_model_id(db_engine, model, city, parameters, timestamp):
+    db_conn = db_engine.raw_connection()
+    query_model_id = ("""SELECT model_id as id from results.models
+                         WHERE run_time ='{timestamp}'::timestamp
+                         AND model = '{model}'
+                         AND city = '{city}'
+                         AND parameters = '{parameters}'"""
+                .format(timestamp=timestamp,
+                       model=model,
+                       city=city,
+                       parameters=parameters))
     model_id = pd.read_sql(query_model_id, db_engine)
     db_conn.close()
     return model_id['id'].iloc[0]
