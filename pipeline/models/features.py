@@ -9,8 +9,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir) 
 import utils
 
-def generate_features(engine,
-                      city,
+def generate_features(city,
                       features,
                       features_table_name,
                       grid_size,
@@ -34,11 +33,11 @@ def generate_features(engine,
     if 'urban_flag' in features:
         selects.append("COALESCE(u1.urban_flag, 0) AS urban_flag")
 
-    select_statement = ", ".join(selects)
-    DROP = ("""DROP TABLE IF EXISTS features.{city}_{prefix}_{size}"""
-            .format(city=city,
-                    size=grid_size,
-                    prefix=features_table_name))
+    #select_statement = ", ".join(selects)
+    #DROP = ("""DROP TABLE IF EXISTS features.{city}_{prefix}_{size}"""
+    #        .format(city=city,
+    #                size=grid_size,
+    #                prefix=features_table_name))
     QUERY = ("""CREATE table features.{city}_{prefix}_{size} AS (
                         SELECT cell_id,
                                year_model,
@@ -85,23 +84,23 @@ def generate_features(engine,
                              u2_population_threshold=dense_population_threshold,
                              u2_cluster_threshold=dense_cluster_threshold))
 
-    INDEX = ("""CREATE INDEX ON features.{city}_{prefix}_{size} (year_model)"""
-               .format(city=city,
-                      prefix=features_table_name,
-                      size=grid_size))
-    db_conn = engine.raw_connection()
-    cur = db_conn.cursor()
-    cur.execute(DROP)
-    db_conn.commit()
-    cur.execute(QUERY)
-    db_conn.commit()
-    cur.execute(INDEX)
-    db_conn.commit()
-    db_conn.close()
+    #INDEX = ("""CREATE INDEX ON features.{city}_{prefix}_{size} (year_model)"""
+    #           .format(city=city,
+    #                  prefix=features_table_name,
+    #                  size=grid_size))
+    #db_conn = engine.raw_connection()
+    #cur = db_conn.cursor()
+    #cur.execute(DROP)
+    #db_conn.commit()
+    #cur.execute(QUERY)
+    #db_conn.commit()
+    #cur.execute(INDEX)
+    #db_conn.commit()
+    #db_conn.close()
+    return QUERY
 
 
-def generate_labels(engine,
-                    city,
+def generate_labels(city,
                     labels_table_name,
                     years,
                     grid_size,
@@ -109,10 +108,10 @@ def generate_labels(engine,
                     population_threshold,
                     cluster_threshold):
 
-    DROP = ("""DROP TABLE IF EXISTS features.{city}_{prefix}_{size}"""
-                .format(city=city,
-                        prefix=labels_table_name,
-                        size=grid_size))
+    #DROP = ("""DROP TABLE IF EXISTS features.{city}_{prefix}_{size}"""
+    #            .format(city=city,
+    #                    prefix=labels_table_name,
+    #                    size=grid_size))
     subqueries_list = []
     selects_list = []
     for i in range(len(years)-1):
@@ -146,19 +145,20 @@ def generate_labels(engine,
                                                    subqueries=subqueries,
                                                    selects=selects))
     # Create index on years for labels
-    INDEX = ("""CREATE INDEX ON features.{city}_{prefix}_{size} (year_model)"""
-              .format(city=city,
-                      prefix=labels_table_name,
-                      size=grid_size))
-    # get connection and send queries
-    db_conn = engine.raw_connection()
-    cur = db_conn.cursor()
-    cur.execute(DROP)
-    db_conn.commit()
-    cur.execute(QUERY_LABELS)
-    db_conn.commit()
-    cur.execute(INDEX)
-    db_conn.commit()
+    # INDEX = ("""CREATE INDEX ON features.{city}_{prefix}_{size} (year_model)"""
+    #           .format(city=city,
+    #                   prefix=labels_table_name,
+    #                   size=grid_size))
+    # # get connection and send queries
+    # db_conn = engine.raw_connection()
+    # cur = db_conn.cursor()
+    # cur.execute(DROP)
+    # db_conn.commit()
+    # cur.execute(QUERY_LABELS)
+    # db_conn.commit()
+    # cur.execute(INDEX)
+    # db_conn.commit()
+    return QUERY_LABELS
 
 if __name__ == "__main__":
     # PArams
