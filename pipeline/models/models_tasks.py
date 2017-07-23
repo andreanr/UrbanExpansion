@@ -1,11 +1,18 @@
 import luigi
 import datetime
 import pdb
+from itertools import product
 from luigi.contrib import postgres
+from luigi import configuration
 
-from features_tasks import FeatureGenerator, LabelGenerator
-import model_utils
+from models.features_tasks import FeatureGenerator, LabelGenerator
+import models.model_utils
 from commons import city_task
+from dotenv import find_dotenv, load_dotenv
+
+import utils
+
+load_dotenv(find_dotenv())
 
 
 class TrainModel(city_task.FeaturesTask):
@@ -19,8 +26,10 @@ class TrainModel(city_task.FeaturesTask):
       parameters (dict): dictionary for parameters to fit model
     """
     model = luigi.Parameter()
-    parameters = luigi.dictParameter()
+    parameters = luigi.DictParameter()
+    features = luigi.ListParameter()
     timestamp = datetime.datetime.now()
+    table = 'results.models'
 
     def requires(self):
         yield [FeatureGenerator(),
@@ -32,7 +41,7 @@ class TrainModel(city_task.FeaturesTask):
         Returns the query for storing the
         train information on results schema
         """
-       return model_utils.store_train(
+        return model_utils.store_train(
                              self.timestamp,
                              self.model,
                              self.city,
@@ -116,7 +125,7 @@ class TrainModel(city_task.FeaturesTask):
                                           predict_y)
 
 
-class TrainModels(luigi.Wrapper):
+class TrainModels(luigi.WrapperTask):
     """
     Luigi Wrapper that loops across all models
     and all combination of parameters specified
@@ -127,20 +136,21 @@ class TrainModels(luigi.Wrapper):
         parameters (dict): combination of grid parameters
                            for running the models
     """
-    models = luigi.Parameter()
-    parameters = luigi.Parameter()
+    #experiment_path = configuration.get_config().get('general','experiment_path')
+    features = luigi.ListParameter()
+    models = luigi.ListParameter()
+    parameters = luigi.DictParameter()
 
-    def requieres(self):
+    def requires(self):
         tasks = []
         # loop through models list
         for model in self.models:
-            parameter_names = sorted(parameters[model])
+            parameter_names = sorted(self.parameters[model])
             parameter_values = [self.parameters[model][p] for p in parameter_names]
             all_params = product(*parameter_values)
 
             # loop through combination of parameters for each model
             for each_param in all_params:
-                task.append(TrainModel(model=model, parameters=each_param))
-
+                tasks.append(TrainModel(model,each_param, self.features))
         yield tasks
 

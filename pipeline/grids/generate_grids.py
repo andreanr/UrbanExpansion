@@ -1,14 +1,22 @@
-import utils
 import luigi
-
 import pdb
+from luigi.contrib import postgres
+import utils
+from commons import city_task
 
+class PreprocessTask(luigi.Task):
+    def output(self):
+        pass
 
-class DropTmpTable(postgres.PostgresQuery):
+class DropTmpTable(city_task.PostgresTask):
     city = luigi.Parameter()
 
     def requires(self):
         return PreprocessTask()
+
+    @property
+    def table(self):
+        return """public.grids_{city}_temp""".format(city=self.city)
 
     @property
     def query(self):
@@ -16,12 +24,16 @@ class DropTmpTable(postgres.PostgresQuery):
             .format(city=self.city))
 
 
-class CreateTmpTable(postgres.PostgresQuery):
+class CreateTmpTable(city_task.PostgresTask):
     city = luigi.Parameter()
 
     def requires(self):
         return [PreprocessTask(),
                 DropTmpTable(self.city)]
+
+    @property
+    def table(self):
+        return """public.grids_{city}_temp""".format(city=self.city)
 
     @property
     def query(self):
@@ -30,11 +42,15 @@ class CreateTmpTable(postgres.PostgresQuery):
                     .format(city=self.city))
 
 
-class AddGeomColumn(postgres.PostgresQuery):
+class AddGeomColumn(city_task.PostgresTask):
     city = luigi.Parameter()
 
     def requires(self):
         return [CreateTmpTable(self.city)]
+
+    @property
+    def table(self):
+        return """public.grids_{city}_temp""".format(city=self.city)
 
     @property
     def query(self):
@@ -42,8 +58,9 @@ class AddGeomColumn(postgres.PostgresQuery):
                 .format(city=self.city))
 
 
-class DropFunction(postgres.PostgresQuery):
+class DropFunction(city_task.PostgresTask):
     city = luigi.Parameter()
+    table = ""
 
     def requires(self):
         return AddGeomColumn(self.city)
@@ -52,12 +69,18 @@ class DropFunction(postgres.PostgresQuery):
     def query(self):
         return ("""DROP FUNCTION genhexagons(float, float, float, float, float)""")
 
-class GenHexagonsSQL(postgres.PostgresQuery):
+
+class GenHexagonsSQL(city_task.PostgresTask):
     city = luigi.Parameter()
     esri = luigi.Parameter()
+    table = ""
 
     def requires(self):
         return DropFunction(self.city)
+
+    @property
+    def table(self):
+        return """public.grids_{city}_temp""".format(city=self.city)
 
     @property
     def query(self):
@@ -102,14 +125,18 @@ class GenHexagonsSQL(postgres.PostgresQuery):
                                                         esri=self.esri))
 
 
-class GenerateTmpGrid(postgres.PostgresQuery):
+class GenerateTmpGrid(city_task.PostgresTask):
     city = luigi.Parameter()
     esri = luigi.Parameter()
-    grid_size = luigi.Paremeter()
+    grid_size = luigi.Parameter()
 
     def requires(self):
         return GenHexagonsSQL(self.city,
                               self.esri)
+
+    @property
+    def table(self):
+        return """public.grids_{city}_temp""".format(city=self.city)
 
     @property
     def query(self):
@@ -131,13 +158,18 @@ class GenerateTmpGrid(postgres.PostgresQuery):
                                                  grid_size=self.grid_size))
 
 
-class GenerateGrid(postgres.PostgresQuery):
+class GenerateGrid(city_task.PostgresTask):
     city = luigi.Parameter()
     esri = luigi.Parameter()
     grid_size = luigi.Parameter()
 
     def requires(self):
         return GenerateTmpGrid(self.city, self.esri, self.grid_size)
+
+    @property
+    def table(self):
+        return """grids.{city}_grid_{size}""".format(city=self.city,
+                                                     size=self.grid_size)
 
     @property
     def query(self):
@@ -154,7 +186,7 @@ class GenerateGrid(postgres.PostgresQuery):
                                      grid_size=self.grid_size))
 
 
-class AlterGeometry(postgres.PostgresQuery):
+class AlterGeometry(city_task.PostgresTask):
     city = luigi.Parameter()
     esri = luigi.Parameter()
     grid_size = luigi.Parameter()
@@ -162,6 +194,10 @@ class AlterGeometry(postgres.PostgresQuery):
     def requires(self):
         return GenerateGrid(self.city, self.esri, self.grid_size)
 
+    @property
+    def table(self):
+        return """grids.{city}_grid_{size}""".format(city=self.city,
+                                                     size=self.grid_size)
     @property
     def query(self):
         return ("""ALTER TABLE grids.{city}_grid_{size}
@@ -171,7 +207,7 @@ class AlterGeometry(postgres.PostgresQuery):
                                                             esri=self.esri))
 
 
-class AddPrimaryKey(postgres.PostgresQuery):
+class AddPrimaryKey(city_task.PostgresTask):
     city = luigi.Parameter()
     esri = luigi.Parameter()
     grid_size = luigi.Parameter()
@@ -182,21 +218,30 @@ class AddPrimaryKey(postgres.PostgresQuery):
                              self.grid_size)
 
     @property
+    def table(self):
+        return """grids.{city}_grid_{size}""".format(city=self.city,
+                                                     size=self.grid_size)
+    @property
     def query(self):
         return ("""ALTER TABLE grids.{city}_grid_{size} ADD PRIMARY KEY (cell_id)"""
                   .format(city=self.city,
                           size=self.grid_size))
 
 
-class GenerateTable(postgres.PostgresQuery):
+class GenerateTable(city_task.PostgresTask):
     city = luigi.Parameter()
     grid_size = luigi.Parameter()
     name = luigi.Parameter()
-    columns_dict = luigi.Parameter()
+    columns_dict = luigi.DictParameter()
 
     def requires(self):
-        return Preprocess()
+        return PreprocessTask()
 
+    @property
+    def table(self):
+        return """grids.{city}_{name}_{size}""".format(city=self.city,
+                                                       name=self.name,
+                                                       size=self.grid_size)
     @property
     def query(self):
         columns_ref = []
@@ -214,13 +259,17 @@ class GenerateTable(postgres.PostgresQuery):
         return QUERY
 
 
-class GenerateUrbanClusterTable(postgres.PostgresQuery):
+class GenerateUrbanClusterTable(city_task.PostgresTask):
     city = luigi.Parameter()
     grid_size = luigi.Parameter()
 
     def requires(self):
-        return Preprocess()
+        return PreprocessTask()
 
+    @property
+    def table(self):
+        return """grids.{city}_urban_clusters_{size}""".format(city=self.city,
+                                                     size=self.grid_size)
     @property
     def query(self):
         return ("""CREATE TABLE grids.{city}_urban_clusters_{size}
@@ -234,20 +283,20 @@ class GenerateUrbanClusterTable(postgres.PostgresQuery):
                             size=self.grid_size))
 
 
-class GenerateGridTables(luigi.Wrapper):
+class GenerateGridTables(luigi.WrapperTask):
     city = luigi.Parameter()
     grid_size = luigi.Parameter()
     grid_tables_path = luigi.Parameter()
 
     def requires(self):
         tables_tasks = [GenerateUrbanClusterTable(self.city, self.grid_size)]
-        grid_tables = utils.utils.read_yaml(self.grid_tables_path)
-        for table, cols in tables.items():
+        grid_tables = utils.read_yaml(self.grid_tables_path)
+        for table, cols in grid_tables.items():
             tables_tasks.append(GenerateTable(self.city,
                                               self.grid_size,
                                               table,
                                               cols))
-        return table_tasks
+        return tables_tasks
 
 
 if __name__ == "__main__":

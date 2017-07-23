@@ -5,10 +5,6 @@ import numpy as np
 from sklearn import (svm, ensemble, tree,
                      linear_model, neighbors, naive_bayes)
 
-import os,sys,inspect
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir)
 import utils
 
 def get_data(db_engine,

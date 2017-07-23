@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 from dotenv import load_dotenv, find_dotenv
+from luigi import configuration
 import os
 import yaml
 
@@ -49,6 +50,39 @@ def make_str(value):
         return unicode(value)
     except:
         return str(value)
+
+def nonurban_grids(grid_tables_path):
+    grid_tables_dict = read_yaml(grid_tables_path)
+    nonurban = [grid for grid in grid_tables_dict.keys()
+                if 'urban' not in grid]
+    return nonurban
+
+
+def urban_grids(grid_tables_path):
+    grid_tables_dict = read_yaml(grid_tables_path)
+    urban = [grid for grid in grid_tables_dict.keys()
+                if 'urban' in grid]
+    return urban
+
+
+def get_features_years(feature_grid):
+    try:
+        years_data = configuration.get_config().get(feature_grid, 'years')
+        years_data = [x.strip() for x in years_data.split(',')]
+        years = dict()
+        for year in years_data:
+            year_model = configuration.get_config().get(feature_grid, year)
+            years[year_model] = year
+        return years
+    except:
+        return dict()
+
+
+def get_years_models():
+    return [configuration.get_config().get('general', 'year_train'),
+            configuration.get_config().get('general', 'year_test'),
+            configuration.get_config().get('general', 'year_predict')]
+
 
 def read_shapefile(filename='default.shp'):
     """

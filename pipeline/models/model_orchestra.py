@@ -3,14 +3,14 @@ import pdb
 from luigi import configuration
 from luigi.contrib import postgres
 
+from models.models_tasks import TrainModels
 import utils
-from model_tasks import TrainModels
 
-class RunUrbanExpansion(luigi.Wrapper):
-    experiment_path = configuration.get('general','experiment_path')
+class RunUrbanExpansion(luigi.WrapperTask):
+    experiment_path = configuration.get_config().get('general','experiment_path')
 
     def requires(self):
-        experiment = utils.utils.read_yaml(self.experiment_path)
+        experiment = utils.read_yaml(self.experiment_path)
         features = utils.get_features(experiment)
         models = experiment['models']
         parameters = experiment['parameters']

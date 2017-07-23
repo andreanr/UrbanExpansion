@@ -1,6 +1,6 @@
 import utils
 
-def water_bodies(grid_size, city, esri, _, _):
+def water_bodies(grid_size, city, esri):
     # insert query
     QUERY_INSERT = (""" INSERT INTO grids.{city}_water_bodies_{size}
                         (cell_id, water_bodies_distance_km, water_bodies_flag)
@@ -18,7 +18,7 @@ def water_bodies(grid_size, city, esri, _, _):
                                                    esri=esri))
     return QUERY_INSERT
 
-def highways(grid_size, city, esri, _, _):
+def highways(grid_size, city, esri):
     # insert query
     QUERY_INSERT = (""" INSERT INTO grids.{city}_highways_{size}
                         (cell_id, distance_highways_km)
@@ -35,7 +35,7 @@ def highways(grid_size, city, esri, _, _):
     return QUERY_INSERT
 
 
-def geopins(grid_size, city, esri, _, _):
+def geopins(grid_size, city, esri):
     QUERY_INSERT = (""" INSERT INTO grids.{city}_geopins_{size}
                        (cell_id, worship_distance, school_distance,
                         university_distance, hospital_distance, aeroway_distance)
@@ -64,7 +64,7 @@ def geopins(grid_size, city, esri, _, _):
                                                 esri=esri))
     return QUERY_INSERT
 
-def city_center(grid_size, city, esri, _, _):
+def city_center(grid_size, city, esri):
     # insert query
     QUERY_INSERT = (""" INSERT INTO grids.{city}_city_center_{size}
                         (cell_id, city_center_distance_km)
@@ -258,7 +258,7 @@ def population(grid_size, city, esri, time, year_model):
 
     return QUERY_INSERT
 
-def dem(grid_size, city, esri, _, _):
+def dem(grid_size, city, esri):
     QUERY_INSERT = (""" WITH dem_tr AS (
                             SELECT ST_DumpAsPolygons(st_transform(rast, {esri})) as rast
                             FROM raw.{city}_dem
@@ -277,7 +277,7 @@ def dem(grid_size, city, esri, _, _):
                                                     esri=esri))
     return QUERY_INSERT
 
-def slope(grid_size, city, esri, _, _):
+def slope(grid_size, city, esri):
     QUERY_INSERT = ("""WITH slope_pct AS (
                            SELECT ST_DumpAsPolygons(rast_percent) AS rast_pct
                            FROM raw.{city}_slope

@@ -3,25 +3,37 @@ import pdb
 from luigi import configuration
 from luigi.contrib import postgres
 
+import os
+from dotenv import find_dotenv, load_dotenv
 
-class CityGeneralTask(postgres.PostgresQuery):
-    city = city = configuration.get('general','city')
-    grid_size = configuration.get('general','grid_size')
-    esri = configuration.get('general','esri')
-    urban_built_threshold = configuration.get('general','urban_built_threshold')
-    urban_population_threshold = configuration.get('general','urban_population_threshold')
-    urban_cluster_threshold = configuration.get('general','urban_cluster_threshold')
+load_dotenv(find_dotenv())
+
+
+class PostgresTask(postgres.PostgresQuery):
+    # RDS
+    database = os.environ.get("PGDATABASE")
+    user = os.environ.get("POSTGRES_USER")
+    password = os.environ.get("POSTGRES_PASSWORD")
+    host = os.environ.get("PGHOST")
+
+
+class CityGeneralTask(PostgresTask):
+    city = configuration.get_config().get('general','city')
+    grid_size = configuration.get_config().get('general','grid_size')
+    esri = configuration.get_config().get('general','esri')
+    urban_built_threshold = configuration.get_config().get('general','urban_built_threshold')
+    urban_population_threshold = configuration.get_config().get('general','urban_population_threshold')
+    urban_cluster_threshold = configuration.get_config().get('general','urban_cluster_threshold')
 
 
 class FeaturesTask(CityGeneralTask):
-    year_train = configuration.get('general', 'year_train')
-    year_test = configuration.get('general', 'year_test')
-    year_predict = configuration.get('general', 'year_predict')
-    features_table_prefix = configuration.get('general','features_table_prefix')
-    labels_table_prefix = configuration.get('general','labels_table_prefix')
-    model_comment = configuration.get('general','model_comment')
-    dense_built_threshold = configuration.get('general','dense_built_threshold')
-    dense_population_threshold = configuration.get('general','dense_population_threshold')
-    dense_cluster_threshold = configuration.get('general','dense_cluster_threshold')
-    features = luigi.Parameter()
+    year_train = configuration.get_config().get('general', 'year_train')
+    year_test = configuration.get_config().get('general', 'year_test')
+    year_predict = configuration.get_config().get('general', 'year_predict')
+    features_table_prefix = configuration.get_config().get('general','features_table_prefix')
+    labels_table_prefix = configuration.get_config().get('general','labels_table_prefix')
+    model_comment = configuration.get_config().get('general','model_comment')
+    dense_built_threshold = configuration.get_config().get('general','dense_built_threshold')
+    dense_population_threshold = configuration.get_config().get('general','dense_population_threshold')
+    dense_cluster_threshold = configuration.get_config().get('general','dense_cluster_threshold')
 
