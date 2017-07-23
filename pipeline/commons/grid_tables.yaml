@@ -4,8 +4,8 @@ water_bodies:
     water_bodies_distance_km: numeric
     water_bodies_flag: int
 
-urban_center:
-    urban_center_distance_km: numeric
+city_center:
+    city_center_distance_km: numeric
 
 built_lds:
     year: int

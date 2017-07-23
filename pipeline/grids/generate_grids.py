@@ -4,9 +4,14 @@ from luigi.contrib import postgres
 import utils
 from commons import city_task
 
+
 class PreprocessTask(luigi.Task):
+    def run(self):
+        with self.output().open('w') as f:
+             f.write('done')
+
     def output(self):
-        pass
+        return luigi.LocalTarget("testing.txt")
 
 class DropTmpTable(city_task.PostgresTask):
     city = luigi.Parameter()
