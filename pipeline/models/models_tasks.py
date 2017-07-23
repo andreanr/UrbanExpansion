@@ -22,7 +22,7 @@ class TrainModel(city_task.FeaturesTask):
     parameters = luigi.dictParameter()
     timestamp = datetime.datetime.now()
 
-    def requirements(self):
+    def requires(self):
         yield [FeatureGenerator(),
                LabelGenerator()]
 

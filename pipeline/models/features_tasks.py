@@ -7,7 +7,7 @@ from features import generate_features, generate_labels
 ## from commons import city_task
 
 class FeatureGenerator(city_task.FeaturesTask):
-    def requirements(self):
+    def requires(self):
         return GridOrchestra()
 
     @property
@@ -24,7 +24,7 @@ class FeatureGenerator(city_task.FeaturesTask):
                                  self.dense_cluster_threshold)
 
 class LabelGenerator(city_task.FeaturesTask):
-    def requirements(self):
+    def requires(self):
         return GridOrchestra()
 
     @property
