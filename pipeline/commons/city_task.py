@@ -7,6 +7,7 @@ from luigi.contrib import postgres
 class CityGeneralTask(postgres.PostgresQuery):
     city = city = configuration.get('general','city')
     grid_size = configuration.get('general','grid_size')
+    esri = configuration.get('general','esri')
     urban_built_threshold = configuration.get('general','urban_built_threshold')
     urban_population_threshold = configuration.get('general','urban_population_threshold')
     urban_cluster_threshold = configuration.get('general','urban_cluster_threshold')
