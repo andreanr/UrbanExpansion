@@ -7,7 +7,7 @@ import pdb
 class DropTmpTable(postgres.PostgresQuery):
     city = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return PreprocessTask()
 
     @property
@@ -19,7 +19,7 @@ class DropTmpTable(postgres.PostgresQuery):
 class CreateTmpTable(postgres.PostgresQuery):
     city = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return [PreprocessTask(),
                 DropTmpTable(self.city)]
 
@@ -33,7 +33,7 @@ class CreateTmpTable(postgres.PostgresQuery):
 class AddGeomColumn(postgres.PostgresQuery):
     city = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return [CreateTmpTable(self.city)]
 
     @property
@@ -45,7 +45,7 @@ class AddGeomColumn(postgres.PostgresQuery):
 class DropFunction(postgres.PostgresQuery):
     city = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return AddGeomColumn(self.city)
 
     @property
@@ -56,7 +56,7 @@ class GenHexagonsSQL(postgres.PostgresQuery):
     city = luigi.Parameter()
     esri = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return DropFunction(self.city)
 
     @property
@@ -107,7 +107,7 @@ class GenerateTmpGrid(postgres.PostgresQuery):
     esri = luigi.Parameter()
     grid_size = luigi.Paremeter()
 
-    def requirements(self):
+    def requires(self):
         return GenHexagonsSQL(self.city,
                               self.esri)
 
@@ -136,7 +136,7 @@ class GenerateGrid(postgres.PostgresQuery):
     esri = luigi.Parameter()
     grid_size = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return GenerateTmpGrid(self.city, self.esri, self.grid_size)
 
     @property
@@ -159,7 +159,7 @@ class AlterGeometry(postgres.PostgresQuery):
     esri = luigi.Parameter()
     grid_size = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return GenerateGrid(self.city, self.esri, self.grid_size)
 
     @property
@@ -176,7 +176,7 @@ class AddPrimaryKey(postgres.PostgresQuery):
     esri = luigi.Parameter()
     grid_size = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return AlterGeometry(self.city,
                              self.esri,
                              self.grid_size)
@@ -194,7 +194,7 @@ class GenerateTable(postgres.PostgresQuery):
     name = luigi.Parameter()
     columns_dict = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return Preprocess()
 
     @property
@@ -218,7 +218,7 @@ class GenerateUrbanClusterTable(postgres.PostgresQuery):
     city = luigi.Parameter()
     grid_size = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         return Preprocess()
 
     @property
@@ -239,7 +239,7 @@ class GenerateGridTables(luigi.Wrapper):
     grid_size = luigi.Parameter()
     grid_tables_path = luigi.Parameter()
 
-    def requirements(self):
+    def requires(self):
         tables_tasks = [GenerateUrbanClusterTable(self.city, self.grid_size)]
         grid_tables = utils.utils.read_yaml(self.grid_tables_path)
         for table, cols in tables.items():

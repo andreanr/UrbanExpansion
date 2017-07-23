@@ -7,85 +7,134 @@ import tempfile
 
 from grids import *
 
-engine = utils.get_engine()
+class FeatureGrid(CityGeneralTask):
+    grid_tables_path = luigi.Parameter()
+    feature = luigi.Parameter()
+    year_model = luigi.Parameter()
+    year_data = luigi.Parameter()
 
-class GenerateGrids(luigi.Task):
+    def requires(self):
+       return [GenerateGridTables(self.city, self.grid_size, self.grid_tables_path),
+               AddPrimaryKey(self.city, self.esri, self.grid_size)]
 
-
-    grid_size = luigi.Parameter() #250
-    city = luigi.Parameter() #'amman'
-    esri = luigi.Parameter() #32236
-    time = luigi.Parameter() #1990
-    built_threshold = luigi.Parameter() #50
-    population_threshold = luigi.Parameter() #75
-    cluster_threshold = luigi.Parameter() #5000
-    year_model = luigi.Parameter() #1990
-
-    def requires():
-
-    def run():
-
-    def output():
-
-class UrbanGrids(luigi.Task):
-
-    def requires():
-
-    def run():
-
-    def output():
+    @property
+    def query(self):
+        feature_function = eval(self.feature)
+        return feature_function(grid_size,
+                                city,
+                                esri,
+                                year_data,
+                                year_model)
 
 
-class InputGrids(luigi.Task):
+class GenerateFeaturesGrids(luigi.Wrapper):
+    grid_tables_path = configuration.get('general','grid_tables_path')
 
-    def requires():
+    def requires(self):
+        ## TODO
+        non_urbanfeatures = utils.nonurban_grids(self.grid_tables_path)
+        feature_tasks = []
+        for feature_grid in non_urbanfeatures:
+            ## TODO
+            years_dict = utils.get_features_years(feature_grid)
+            for year_model, year_data in years_dict.items():
+                feature_tasks.append(FeatureGrid(self.grid_tables_path,
+                                                 feature_grid,
+                                                 year_model,
+                                                 year_data))
+        return feature_tasks
 
-    def run():
 
-    def output():
+class UrbanCluster(CityGeneralTask):
+    grid_tables_path = luigi.Parameter()
+    year_model = luigi.Parameter()
+    built_threshold = luigi.Parameter()
+    population_threshold = luigi.Parameter()
+
+    def requires(self):
+        return GenerateFeaturesGrids(self.grid_tables_path)
+
+    @property
+    def query(self):
+        return grids.urban_clusters(self.grid_size,
+                                    self.city,
+                                    self.built_threshold,
+                                    self.population_threshold,
+                                    self.year_model)
+
+class UrbanClusters(luigi.Wrapper):
+    grid_tables_path = configuration.get('general','grid_tables_path')
+    urban_built_threshold = configuration.get('general','urban_built_threshold')
+    urban_population_threshold = configuration.get('general', 'urban_population_threshold')
+    dense_built_threshold = configuration.get('general', 'dense_built_threshold')
+    dense_population_threshold = configuration.get('general', 'dense_population_threshold')
+
+    def requires(self):
+        years_model = utils.get_years_models()
+        tasks = []
+        # for urban clusters
+        for year_model in years_model:
+            tasks.append(UrbanCluster(self.grid_tables_path,
+                                      year_model,
+                                      self.urban_built_threshold,
+                                      self.urban_population_threshold))
+        # for dense clusters
+        for year_model in years_model:
+            tasks.append(UrbanCluster(self.grid_tables_path,
+                                      year_model,
+                                      self.dense_built_threshold,
+                                      self.dense_population_threshold))
+        return tasks
 
 
-class UrbanGrids(luigi.Task):
+class UrbanFeatureGrid(CityGeneralTask):
+    feature = luigi.Parameter()
+    year_model = luigi.Parameter()
+    built_threshold = luigi.Parameter()
+    population_threshold = luigi.Parameter()
+    cluster_threshold = luigi.Parameter()
 
-    def requires():
+    def requires(self):
+        return UrbanClusters()
 
-    def run():
+    @property
+    def query(self):
+        feature_function = eval(self.feature)
+        return feature_function(self.grid_size,
+                                self.city,
+                                self.built_threshold,
+                                self.population_threshold,
+                                self.cluster_threshold,
+                                self.year_mode)
 
-    def output():
 
+class GenerateUrbanFeaturesGrids(luigi.Wrapper):
+    grid_tables_path = configuration.get('general','grid_tables_path')
+    urban_built_threshold = configuration.get('general','urban_built_threshold')
+    urban_population_threshold = configuration.get('general', 'urban_population_threshold')
+    urban_cluster_threshold = configuration.get('general', 'urban_cluster_threshold')
+    dense_built_threshold = configuration.get('general', 'dense_built_threshold')
+    dense_population_threshold = configuration.get('general', 'dense_population_threshold')
+    dense_cluster_threshold = configuration.get('general', 'dense_cluster_threshold')
 
-#1. se puede paralelizar generar todos los tipos de grids excepto: 
-# urban_clusters, urban_distance, urban_neighbours(ese aun no corre se estaba tardando mucho),
-#2.  generar urban_clusters - que depende de population y built_lds
-#3. urban_distance, urban_neighbours que dependen del urban_cluster
+    def requires(self):
+        ## TODO
+        urbanfeatures = utils.urban_grids(self.grid_tables_path)
+        tasks = []
+        for feature_grid in urbanfeatures:
+            ## TODO
+            years_model = utils.get_years_models()
+            for year_model in years_model:
+                tasks.append(UrbanFeatureGrid(feature_grid,
+                                              year_model,
+                                              self.urban_built_threshold,
+                                              self.urban_population_threshold,
+                                              self.urban_cluster_threshold))
 
-#lo que se me ocurría era solo cambiar el nombre al que se llama urban_center como a (city_center) y así es más fácil separar par lo primero todo lo que dice 'urban' no los corres. 
-#despues urban_cluster
-#y ya despues los que digan urba
-
-#geopins(grid_size, city, esri, engine)
-# print('urban_center')
-#urban_center(grid_size, city, esri, engine)
-# print('slope')
-#slope(grid_size, city, esri, engine)
-# print('highways')
-#highways(grid_size, city, esri, engine)
-# print('built_lds')
-#built_lds(grid_size, city, time, esri, engine)
-# print('dem')
-#dem(grid_size, city, esri, engine)
-# print('popuation')
-#population(grid_size, city, time, esri, engine)
-#print('city lights')
-#city_lights(grid_size, city, time, esri, engine)
-# print('settlements')
-#settlements(grid_size, city, time, esri, engine)
-#print('urban cluster')
-#urban_clusters(grid_size, city, built_threshold, population_threshold, year_model, engine)
-# print('built_distance')
-#built_distance(grid_size, city, built_threshold, time, year_model, esri, engine)
-#print('urban distance')
-#urban_distance(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine)
-#print('urban neighbours')
-#urban_neighbours(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine)
-
+            for year_model in years_model:
+                tasks.append(UrbanFeatureGrid(feature_grid,
+                                              year_model,
+                                              self.dense_built_threshold,
+                                              self.dense_population_threshold,
+                                              self.dense_cluster_threshold))
+        return tasks
