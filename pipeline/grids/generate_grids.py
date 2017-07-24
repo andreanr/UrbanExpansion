@@ -15,60 +15,67 @@ class PreprocessTask(luigi.Task):
 
 class DropTmpTable(city_task.PostgresTask):
     city = luigi.Parameter()
+    grid_size = luigi.Parameter()
 
     def requires(self):
         return PreprocessTask()
 
     @property
     def table(self):
-        return """public.grids_{city}_temp""".format(city=self.city)
+        return """public.grids_{city}_{size}_temp""".format(city=self.city,
+                                                            size=self.grid_size)
 
     @property
     def query(self):
-        return ("""DROP TABLE IF EXISTS public.grids_{city}_temp"""
-            .format(city=self.city))
+        return ("""DROP TABLE IF EXISTS public.grids_{city}_{size}_temp"""
+            .format(city=self.city, size=self.grid_size))
 
 
 class CreateTmpTable(city_task.PostgresTask):
     city = luigi.Parameter()
+    grid_size = luigi.Parameter()
 
     def requires(self):
         return [PreprocessTask(),
-                DropTmpTable(self.city)]
+                DropTmpTable(self.city, self.grid_size)]
 
     @property
     def table(self):
-        return """public.grids_{city}_temp""".format(city=self.city)
+        return """public.grids_{city}_{size}_temp""".format(city=self.city,
+                                                            size=self.grid_size)
 
     @property
     def query(self):
-        return  ("""CREATE TABLE public.grids_{city}_temp
+        return  ("""CREATE TABLE public.grids_{city}_{size}_temp
                          (cell_id serial not null primary key)"""
-                    .format(city=self.city))
+                    .format(city=self.city, size=self.grid_size))
 
 
 class AddGeomColumn(city_task.PostgresTask):
     city = luigi.Parameter()
+    grid_size = luigi.Parameter()
 
     def requires(self):
-        return [CreateTmpTable(self.city)]
+        return [CreateTmpTable(self.city, self.grid_size)]
 
     @property
     def table(self):
-        return """public.grids_{city}_temp""".format(city=self.city)
+        return """public.grids_{city}_{size}_temp""".format(city=self.city,
+                                                            size=self.grid_size)
 
     @property
     def query(self):
-        return ("""SELECT addgeometrycolumn('public', 'grids_{city}_temp','cell', 0, 'POLYGON', 2)"""
-                .format(city=self.city))
+        return ("""SELECT addgeometrycolumn('public', 'grids_{city}_{size}_temp','cell', 0, 'POLYGON', 2)"""
+                .format(city=self.city, size=self.grid_size))
 
 
 class DropFunction(city_task.PostgresTask):
     city = luigi.Parameter()
+    grid_size = luigi.Parameter()
     table = ""
 
     def requires(self):
-        return AddGeomColumn(self.city)
+        return AddGeomColumn(self.city, self.grid_size)
 
     @property
     def query(self):
@@ -77,15 +84,17 @@ class DropFunction(city_task.PostgresTask):
 
 class GenHexagonsSQL(city_task.PostgresTask):
     city = luigi.Parameter()
+    grid_size = luigi.Parameter()
     esri = luigi.Parameter()
     table = ""
 
     def requires(self):
-        return DropFunction(self.city)
+        return DropFunction(self.city, self.grid_size)
 
     @property
     def table(self):
-        return """public.grids_{city}_temp""".format(city=self.city)
+        return """public.grids_{city}_{size}_temp""".format(city=self.city,
+                                                            size=self.grid_size)
 
     @property
     def query(self):
@@ -113,7 +122,7 @@ class GenHexagonsSQL(city_task.PostgresTask):
                                                             0 || ' ' || 0     ||
                                                     '))';
                     BEGIN
-                        INSERT INTO public.grids_{city}_temp (cell) SELECT st_translate(cell, x_series*(2*a+c)+xmin, y_series*(2*(a +c))+ymin)
+                        INSERT INTO public.grids_{city}_{size}_temp (cell) SELECT st_translate(cell, x_series*(2*a+c)+xmin, y_series*(2*(a +c))+ymin)
                         from generate_series(0, ncol::int , 1) as x_series,
                         generate_series(0, nrow::int,1 ) as y_series,
                         (
@@ -121,27 +130,30 @@ class GenHexagonsSQL(city_task.PostgresTask):
                            UNION
                            SELECT ST_Translate(polygon_string::geometry, b , a+c)  as cell
                         ) as two_hex;
-                        ALTER TABLE public.grids_{city}_temp
+                        ALTER TABLE public.grids_{city}_{size}_temp
                         ALTER COLUMN cell TYPE geometry(Polygon, {esri})
                         USING ST_SetSRID(cell, {esri});
                         RETURN NULL;
                     END;
                     $total$ LANGUAGE plpgsql;""".format(city=self.city,
+                                                        size=self.grid_size,
                                                         esri=self.esri))
 
 
 class GenerateTmpGrid(city_task.PostgresTask):
     city = luigi.Parameter()
-    esri = luigi.Parameter()
     grid_size = luigi.Parameter()
+    esri = luigi.Parameter()
 
     def requires(self):
         return GenHexagonsSQL(self.city,
+                              self.grid_size,
                               self.esri)
 
     @property
     def table(self):
-        return """public.grids_{city}_temp""".format(city=self.city)
+        return """public.grids_{city}_{size}_temp""".format(city=self.city,
+                                                            size=self.grid_size)
 
     @property
     def query(self):
@@ -165,11 +177,11 @@ class GenerateTmpGrid(city_task.PostgresTask):
 
 class GenerateGrid(city_task.PostgresTask):
     city = luigi.Parameter()
-    esri = luigi.Parameter()
     grid_size = luigi.Parameter()
+    esri = luigi.Parameter()
 
     def requires(self):
-        return GenerateTmpGrid(self.city, self.esri, self.grid_size)
+        return GenerateTmpGrid(self.city, self.grid_size, self.esri)
 
     @property
     def table(self):
@@ -183,7 +195,7 @@ class GenerateGrid(city_task.PostgresTask):
                             SELECT st_transform(geom, {esri}) AS geom
                             FROM raw.{city})
                         SELECT grid.*
-                        FROM public.grids_{city}_temp AS grid
+                        FROM public.grids_{city}_{grid_size}_temp AS grid
                         JOIN buffer_prj
                         ON st_intersects(cell, geom)
                         );""".format(city=self.city,
@@ -193,11 +205,11 @@ class GenerateGrid(city_task.PostgresTask):
 
 class AlterGeometry(city_task.PostgresTask):
     city = luigi.Parameter()
-    esri = luigi.Parameter()
     grid_size = luigi.Parameter()
+    esri = luigi.Parameter()
 
     def requires(self):
-        return GenerateGrid(self.city, self.esri, self.grid_size)
+        return GenerateGrid(self.city, self.grid_size, self.esri)
 
     @property
     def table(self):
@@ -214,13 +226,13 @@ class AlterGeometry(city_task.PostgresTask):
 
 class AddPrimaryKey(city_task.PostgresTask):
     city = luigi.Parameter()
-    esri = luigi.Parameter()
     grid_size = luigi.Parameter()
+    esri = luigi.Parameter()
 
     def requires(self):
         return AlterGeometry(self.city,
-                             self.esri,
-                             self.grid_size)
+                            self.grid_size,
+                             self.esri)
 
     @property
     def table(self):

@@ -6,7 +6,8 @@ from luigi.contrib import postgres
 from luigi import configuration
 
 from models.features_tasks import FeatureGenerator, LabelGenerator
-import models.model_utils
+from models import model_utils
+from models import scoring
 from commons import city_task
 from dotenv import find_dotenv, load_dotenv
 
@@ -32,7 +33,7 @@ class TrainModel(city_task.FeaturesTask):
     table = 'results.models'
 
     def requires(self):
-        yield [FeatureGenerator(),
+        yield [FeatureGenerator(self.features),
                LabelGenerator()]
 
     @property
@@ -56,12 +57,11 @@ class TrainModel(city_task.FeaturesTask):
 
     def run(self):
         engine = utils.get_engine()
-        connection = engine.connect()
+        connection = engine.raw_connection()
         cursor = connection.cursor()
 
         # commit and close connection
-        connection.commit()
-        engine = utils.get_engine()
+        print('Get data')
         train_x, train_y = model_utils.get_data(engine,
                                        self.year_train,
                                        self.city,
@@ -69,21 +69,23 @@ class TrainModel(city_task.FeaturesTask):
                                        self.grid_size,
                                        self.features_table_prefix,
                                        self.labels_table_prefix)
-        modelobj = model_utils.define_model(self.model, self.parameters)
+
+        parameters = dict(self.parameters)
+        modelobj = model_utils.define_model(self.model, parameters)
+        print('fit model')
         modelobj.fit(train_x, train_y)
 
-        importances = get_feature_importances(modelobj)
+        print('get feature importances')
+        importances = model_utils.get_feature_importances(modelobj)
         sql = self.query
         cursor.execute(sql)
-        # Update marker table
-        self.output().touch(connection)
         connection.commit()
-        connection.close()
 
         # get model_id
-        model_id = model_utils.get_model_id(engine, self.model, self.city, self.parameters, self.timestamp)
-        model_utils.store_importances(engine, model_id,city, features, importances)
+        model_id = model_utils.get_model_id(engine, self.model, self.city, parameters, self.timestamp)
+        model_utils.store_importances(engine, model_id, self.city, self.features, importances)
         if self.year_test:
+            print('testing')
             test_x, test_y  = model_utils.get_data(engine,
                                           self.year_test,
                                           self.city,
@@ -91,7 +93,7 @@ class TrainModel(city_task.FeaturesTask):
                                           self.grid_size,
                                           self.features_table_prefix,
                                           self.labels_table_prefix)
-            test_x['scores'] = predict_model(modelobj, test_x)
+            test_x['scores'] = model_utils.predict_model(modelobj, test_x)
             model_utils.store_predictions(engine,
                                           model_id,
                                           self.city,
@@ -99,7 +101,7 @@ class TrainModel(city_task.FeaturesTask):
                                           test_x.index,
                                           test_x['scores'],
                                           test_y)
-
+            print('scoring')
             metrics = scoring.calculate_all_evaluation_metrics(test_y,
                                                                test_x['scores'])
             model_utils.store_evaluations(engine,
@@ -108,6 +110,7 @@ class TrainModel(city_task.FeaturesTask):
                                           self.year_test,
                                           metrics)
         if self.year_predict:
+            print('predicting')
             predict_x, predict_y = model_utils.get_data(engine,
                                                          self.year_predict,
                                                          self.city,
@@ -115,14 +118,19 @@ class TrainModel(city_task.FeaturesTask):
                                                          self.grid_size,
                                                          self.features_table_prefix,
                                                          self.labels_table_prefix)
-            predict_x['scores'] = predict_model(modelobj, predict_x)
+            predict_x['scores'] = model_utils.predict_model(modelobj, predict_x)
             model_utils.store_predictions(engine,
-                                          self.model_id,
+                                          model_id,
                                           self.city,
                                           self.year_predict,
-                                          self.predict_x.index,
+                                          predict_x.index,
                                           predict_x['scores'],
                                           predict_y)
+
+        # Update marker table
+        self.output().touch(connection)
+        connection.commit()
+        connection.close()
 
 
 class TrainModels(luigi.WrapperTask):
@@ -146,11 +154,11 @@ class TrainModels(luigi.WrapperTask):
         # loop through models list
         for model in self.models:
             parameter_names = sorted(self.parameters[model])
-            parameter_values = [self.parameters[model][p] for p in parameter_names]
+            parameter_values = [list(self.parameters[model][p]) for p in parameter_names]
             all_params = product(*parameter_values)
-
             # loop through combination of parameters for each model
             for each_param in all_params:
-                tasks.append(TrainModel(model,each_param, self.features))
+                param_i = {name: value for name, value in zip(parameter_names, each_param)}
+                tasks.append(TrainModel(model, param_i, self.features))
         yield tasks
 

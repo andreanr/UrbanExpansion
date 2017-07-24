@@ -110,7 +110,7 @@ def settlements(grid_size, city, esri, time, year_model):
                             SELECT ST_DumpAsPolygons(st_transform(rast, {esri})) AS rast
                             FROM raw.{city}_settlements_{time}
                     ) INSERT INTO grids.{city}_settlements_{size}
-                        (cell_id, year, min_settlements, max_settlements, mean_settlements, sum_settlements)
+                        (cell_id, year, year_model,  min_settlements, max_settlements, mean_settlements, sum_settlements)
                          SELECT cell_id,
                                 {time} as year,
                                 {year_model} as year_model,

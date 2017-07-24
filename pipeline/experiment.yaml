@@ -61,7 +61,7 @@ Features:
 models: ['RandomForest'] #, 'ExtraTrees', 'LogisticRegression']
 parameters:
     RandomForest:
-        n_estimators: [10] #, 50, 100, 500, 1000, 5000, 10000]
+        n_estimators: [10, 50] #, 100, 500, 1000, 5000, 10000]
         max_depth: [5] #, 10, 50] #,5,10] #[100, 5, 10, 50]
         max_features: ['sqrt'] #, 'sqrt'] # ['log2', 2, 4, 8, 16, "auto"]
         criterion: ['gini'] #, 'entropy']

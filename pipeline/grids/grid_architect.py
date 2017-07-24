@@ -20,7 +20,7 @@ class GridFeature(city_task.CityGeneralTask):
 
     def requires(self):
        return [GenerateGridTables(self.city, self.grid_size, self.grid_tables_path),
-               AddPrimaryKey(self.city, self.esri, self.grid_size)]
+               AddPrimaryKey(self.city, self.grid_size, self.esri)]
 
     @property
     def table(self):
@@ -85,11 +85,11 @@ class UrbanCluster(city_task.CityGeneralTask):
                                                                size=self.grid_size)
     @property
     def query(self):
-        return grids.urban_clusters(self.grid_size,
-                                    self.city,
-                                    self.built_threshold,
-                                    self.population_threshold,
-                                    self.year_model)
+        return urban_clusters(self.grid_size,
+                              self.city,
+                              self.built_threshold,
+                              self.population_threshold,
+                              self.year_model)
 
 class UrbanClusters(luigi.WrapperTask):
     grid_tables_path = configuration.get_config().get('general','grid_tables_path')
@@ -139,7 +139,7 @@ class UrbanGridFeature(city_task.CityGeneralTask):
                                 self.built_threshold,
                                 self.population_threshold,
                                 self.cluster_threshold,
-                                self.year_mode)
+                                self.year_model)
 
 
 class GenerateUrbanGridsFeatures(luigi.WrapperTask):

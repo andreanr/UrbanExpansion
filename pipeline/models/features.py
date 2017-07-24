@@ -29,7 +29,7 @@ def generate_features(city,
     if 'urban_flag' in features:
         selects.append("COALESCE(u1.urban_flag, 0) AS urban_flag")
 
-    #select_statement = ", ".join(selects)
+    select_statement = ", ".join(selects)
     #DROP = ("""DROP TABLE IF EXISTS features.{city}_{prefix}_{size}"""
     #        .format(city=city,
     #                size=grid_size,
@@ -47,7 +47,7 @@ def generate_features(city,
                             USING (cell_id)
                        LEFT OUTER JOIN grids.{city}_water_bodies_{size}
                             USING (cell_id)
-                       LEFT OUTER JOIN grids.{city}_urban_center_{size}
+                       LEFT OUTER JOIN grids.{city}_city_center_{size}
                             USING (cell_id)
                        LEFT OUTER JOIN grids.{city}_population_{size}
                             USING (cell_id)
@@ -60,8 +60,6 @@ def generate_features(city,
                        LEFT OUTER JOIN grids.{city}_urban_distance_{size} u1
                             USING (cell_id, year_model)
                        LEFT OUTER JOIN grids.{city}_urban_distance_{size} u2
-                            USING (cell_id, year_model)
-                       LEFT OUTER JOIN grids.{city}_urban_neighbours_{size}
                             USING (cell_id, year_model)
                        WHERE u1.built_threshold = {u1_built_threshold}
                        AND  u1.population_threshold = {u1_population_threshold}

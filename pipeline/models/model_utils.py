@@ -45,6 +45,36 @@ def get_data(db_engine,
     data.set_index('cell_id', inplace=True)
     return data.ix[:, data.columns != 'label'], data['label']
 
+
+def get_feature_importances(model):
+    """
+    Get feature importances (from scikit-learn) of trained model.
+    Args:
+        model: Trained model
+    Returns:
+        Feature importances, or failing that, None
+    """
+    ##TODO return a dict
+    try:
+        return model.feature_importances_
+    except:
+        pass
+    try:
+        # Must be 1D for feature importance plot
+        if len(model.coef_) <= 1:
+            return model.coef_[0]
+        else:
+            return model.coef_
+    except:
+        pass
+    return None
+
+
+def predict_model(modelobj, test):
+    predicted_score = modelobj.predict_proba(test)[:, 1]
+    return predicted_score
+
+
 def store_train(timestamp,
                 model,
                 city,
@@ -60,7 +90,6 @@ def store_train(timestamp,
     Function that stores all train information
     for each model on results.models on the database
     """
-
     query = (""" INSERT INTO results.models (run_time,
                                              city,
                                              model_type,
@@ -85,8 +114,8 @@ def store_train(timestamp,
                          '{model_comment}') """.format(run_time=timestamp,
                                                        city=city,
                                                       model_type=model,
-                                                      model_parameters=json.dumps(parameters),
-                                                      features=features,
+                                                      model_parameters=json.dumps(dict(parameters)),
+                                                      features=list(features),
                                                       year_train=year_train,
                                                       grid_size=grid_size,
                                                       built_threshold=built_threshold,
@@ -105,13 +134,13 @@ def get_model_id(db_engine, model, city, parameters, timestamp):
     db_conn = db_engine.raw_connection()
     query_model_id = ("""SELECT model_id as id from results.models
                          WHERE run_time ='{timestamp}'::timestamp
-                         AND model = '{model}'
+                         AND model_type = '{model}'
                          AND city = '{city}'
-                         AND parameters = '{parameters}'"""
+                         AND model_parameters = '{parameters}'"""
                 .format(timestamp=timestamp,
                        model=model,
                        city=city,
-                       parameters=parameters))
+                       parameters=json.dumps(parameters)))
     model_id = pd.read_sql(query_model_id, db_engine)
     db_conn.close()
     return model_id['id'].iloc[0]
@@ -206,7 +235,7 @@ def store_evaluations(engine, model_id, city, year_test, metrics):
         db_conn.commit()
 
 
-def define_model(model, parameters, n_cores):
+def define_model(model, parameters, n_cores=1):
     """
     Function that given the model name,
     calls the model object with the
