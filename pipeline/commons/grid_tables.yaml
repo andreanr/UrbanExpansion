@@ -4,11 +4,12 @@ water_bodies:
     water_bodies_distance_km: numeric
     water_bodies_flag: int
 
-urban_center:
-    urban_center_distance_km: numeric
+city_center:
+    city_center_distance_km: numeric
 
 built_lds:
     year: int
+    year_model: int
     min_built_lds: numeric
     max_built_lds: numeric
     mean_built_lds: numeric
@@ -17,6 +18,7 @@ built_lds:
 
 settlements:
     year: int
+    year_model: int
     min_settlements: numeric
     max_settlements: numeric
     mean_settlements: numeric
@@ -24,6 +26,7 @@ settlements:
 
 population:
    year: int
+   year_model: int
    min_population: numeric
    max_population: numeric
    mean_population: numeric
@@ -32,6 +35,7 @@ population:
 
 city_lights:
    year: int
+   year_model: int
    min_city_lights: numeric
    max_city_lights: numeric
    mean_city_lights: numeric
@@ -46,12 +50,12 @@ urban_distance:
     urban_flag: int
     urban_distance_km: numeric
 
-urban_neighbours:
-    year_model: int
-    built_threshold: numeric
-    population_threshold: numeric
-    cluster_threshold: numeric
-    urban_neighbours: int
+#urban_neighbours:
+#    year_model: int
+#    built_threshold: numeric
+#    population_threshold: numeric
+#    cluster_threshold: numeric
+#    urban_neighbours: int
 
 geopins:
      worship_distance: numeric
