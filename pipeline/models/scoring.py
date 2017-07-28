@@ -37,22 +37,17 @@ def confusion_matrix_at_x(test_labels, test_prediction_binary_at_x):
 def calculate_all_evaluation_metrics( test_label, test_predictions):
     """ Calculate several evaluation metrics using sklearn for a set of
         labels and predictions.
-    :param list test_labels: list of true labels for the test data.
-    :param list test_predictions: list of risk scores for the test data.
-    :return: all_metrics
-    :rtype: dict
+    Args:
+        test_labels (list): list of true labels for the test data.
+        test_predictions (list): list of risk scores for the test data
+    Returns:
+        all_metrics (dict)
     """
 
     all_metrics = dict()
 
-    # FORMAT FOR DICTIONARY KEY
-    # all_metrics["metric|parameter|unit|comment"] OR
-    # all_metrics["metric|parameter|unit"] OR
-    # all_metrics["metric||comment"] OR
-    # all_metrics["metric"]
-
-    cutoffs = [.1, .15, .2, .25, .3, .35, .4, .45, .5, .55,  .6,
-               .65, .7, .75, .8, .85, .9]
+    cutoffs = [.1, .15, .2, .25, .3, .35, .4, .45, .5,
+               .55, .6, .65, .7, .75, .8, .85, .9]
     for cutoff in cutoffs:
         test_predictions_binary_at_x = generate_binary_at_x(test_predictions, cutoff)
         TP, TN, FP, FN = confusion_matrix_at_x(test_label,  test_predictions_binary_at_x)

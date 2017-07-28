@@ -84,6 +84,8 @@ class TrainModel(city_task.FeaturesTask):
         # get model_id
         model_id = model_utils.get_model_id(engine, self.model, self.city, parameters, self.timestamp)
         model_utils.store_importances(engine, model_id, self.city, self.features, importances)
+
+        # Testing
         if self.year_test:
             print('testing')
             test_x, test_y  = model_utils.get_data(engine,
@@ -109,6 +111,7 @@ class TrainModel(city_task.FeaturesTask):
                                           self.city,
                                           self.year_test,
                                           metrics)
+        # Predicting
         if self.year_predict:
             print('predicting')
             predict_x, predict_y = model_utils.get_data(engine,
@@ -144,7 +147,6 @@ class TrainModels(luigi.WrapperTask):
         parameters (dict): combination of grid parameters
                            for running the models
     """
-    #experiment_path = configuration.get_config().get('general','experiment_path')
     features = luigi.ListParameter()
     models = luigi.ListParameter()
     parameters = luigi.DictParameter()

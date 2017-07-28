@@ -20,7 +20,7 @@ class GridFeature(city_task.CityGeneralTask):
 
     def requires(self):
        return [GenerateGridTables(self.city, self.grid_size, self.grid_tables_path),
-               AddPrimaryKey(self.city, self.grid_size, self.esri)]
+               GenerateGrid(self.city, self.grid_size, self.esri)]
 
     @property
     def table(self):

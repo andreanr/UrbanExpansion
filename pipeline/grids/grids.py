@@ -1,6 +1,11 @@
 import utils
 
 def water_bodies(grid_size, city, esri):
+    """
+    Generates query that inserts:
+        - distance in km from cell centroid to water bodies
+        - flag = 1 for cells that are inside a water body
+    """
     # insert query
     QUERY_INSERT = (""" INSERT INTO grids.{city}_water_bodies_{size}
                         (cell_id, water_bodies_distance_km, water_bodies_flag)
@@ -18,7 +23,12 @@ def water_bodies(grid_size, city, esri):
                                                    esri=esri))
     return QUERY_INSERT
 
+
 def highways(grid_size, city, esri):
+    """
+    Generates query that inserts:
+        - minimum distance from centroid of cell to highways in km
+    """
     # insert query
     QUERY_INSERT = (""" INSERT INTO grids.{city}_highways_{size}
                         (cell_id, distance_highways_km)
@@ -36,6 +46,14 @@ def highways(grid_size, city, esri):
 
 
 def geopins(grid_size, city, esri):
+    """
+    Generates query that inserts:
+        - minimum distance from centroid of cell to a place of worship
+        - minimum distance from centroid of cell to a school
+        - minimum distance from centroid of cell to a university
+        - minimum distance from centroid of cell to a hisptial
+        - minimum distance from centroid of cell to an aeroway
+    """
     QUERY_INSERT = (""" INSERT INTO grids.{city}_geopins_{size}
                        (cell_id, worship_distance, school_distance,
                         university_distance, hospital_distance, aeroway_distance)
@@ -64,7 +82,12 @@ def geopins(grid_size, city, esri):
                                                 esri=esri))
     return QUERY_INSERT
 
+
 def city_center(grid_size, city, esri):
+    """
+    Generates query that inserts:
+        - minimum distance from centroid of cell to the city center
+    """
     # insert query
     QUERY_INSERT = (""" INSERT INTO grids.{city}_city_center_{size}
                         (cell_id, city_center_distance_km)
@@ -81,7 +104,18 @@ def city_center(grid_size, city, esri):
 
     return QUERY_INSERT
 
+
 def built_lds(grid_size, city, esri, time, year_model):
+    """
+    Query that inserts the built up value [0-1] for each
+    year data (time) that corresponds to a specific year_model
+    based on a 250 x 250 raster image
+        - min_built_lds: minimum value that intersects the cell
+        - max_built_lds: maximum value that intersects the cell
+        - mean_built_lds: mean value that intersects the cell
+        - stddev_built_lds: standard deviation of the values that intersect the cell
+        - sum_built_lds: sum of the values that intersect the cell
+    """
     QUERY_INSERT = ("""WITH built_tr AS (
                             SELECT ST_DumpAsPolygons(st_transform(rast, {esri})) AS rast
                             FROM raw.{city}_built_lds_{time}
@@ -96,7 +130,7 @@ def built_lds(grid_size, city, esri, time, year_model):
                                 stddev((rast).val) AS stddev_built_lds,
                                 sum((rast).val) AS sum_built_lds
                         FROM grids.{city}_grid_{size}
-                        LEFT JOIN built_tr 
+                        LEFT JOIN built_tr
                         ON ST_intersects(cell, (rast).geom)
                         GROUP BY cell_id""".format(city=city,
                                                   size=grid_size,
@@ -104,6 +138,7 @@ def built_lds(grid_size, city, esri, time, year_model):
                                                   year_model=year_model,
                                                   esri=esri))
     return QUERY_INSERT
+
 
 def settlements(grid_size, city, esri, time, year_model):
     QUERY_INSERT = ("""WITH settlements_tr AS (
@@ -129,7 +164,16 @@ def settlements(grid_size, city, esri, time, year_model):
     return QUERY_INSERT
 
 def urban_clusters(grid_size, city, built_threshold, population_threshold, year_model):
-    QUERY_INSERT = (""" WITH urban AS (SELECT 
+    """
+    Query that inserts to urban cluster table polygons with built_up and population values
+    greater or equal than the thresholds.
+    Args:
+        grid_size (int): size of the grid (2*apo) in meters
+        city (str): city name
+        built_threshold (int): built up threshold for selecting urban cells
+        population_threshold (int): population threshold for selecting urban cells
+    """
+    QUERY_INSERT = (""" WITH urban AS (SELECT
                             (ST_Dump(st_union(cell))).geom AS cell_cluster
                              FROM grids.{city}_built_lds_{size}
                               JOIN grids.{city}_population_{size}
@@ -139,7 +183,7 @@ def urban_clusters(grid_size, city, built_threshold, population_threshold, year_
                               WHERE year_model = {year_model}
                               AND max_built_lds > {built_threshold} / 100.00
                               AND max_population >= {population_threshold}
-                        ), urban_population AS ( 
+                        ), urban_population AS (
                             SELECT cell_cluster,
                                   sum(mean_population) AS population
                             FROM grids.{city}_population_{size}
@@ -166,8 +210,18 @@ def urban_clusters(grid_size, city, built_threshold, population_threshold, year_
     return QUERY_INSERT
 
 
-def urban_distance(grid_size, city, built_threshold, population_threshold, cluster_threshold, 
-                           year_model):
+def urban_distance(grid_size, city, built_threshold, population_threshold,
+                   cluster_threshold,  year_model):
+    """
+    Generates query that inserts:
+        - minimum distance from centroid of cell to urban cluster
+    Args:
+        grid_size (int): size of the grid (2*apo) in meters
+        city (str): city name
+        built_threshold (int): cluster generated with built up  threshold
+        population_threshold (int): luster generated with built up  threshold
+        cluster_threshold (int): population threshold for the whole cluster
+    """
     QUERY_INSERT = ("""INSERT INTO grids.{city}_urban_distance_{size}
                (cell_id, year_model, built_threshold, population_threshold, cluster_threshold,
                     urban_flag,  urban_distance_km)
@@ -192,6 +246,7 @@ def urban_distance(grid_size, city, built_threshold, population_threshold, clust
                                             cluster_threshold=cluster_threshold,
                                             year_model=year_model))
     return QUERY_INSERT
+
 
 ## TODO
 def urban_neighbours(grid_size, city, built_threshold, population_threshold, cluster_threshold,
@@ -234,6 +289,16 @@ def urban_neighbours(grid_size, city, built_threshold, population_threshold, clu
 
 
 def population(grid_size, city, esri, time, year_model):
+    """
+    Query that inserts the population value that intersects the cell
+    for each year data (time) that corresponds to a specific year_model
+    based on a 250 x 250 raster image
+        - min_population: minimum value that intersects the cell
+        - max_population: maximum value that intersects the cell
+        - mean_population: mean value that intersects the cell
+        - stddev_population: standard deviation of the values that intersect the cell
+        - sum_population: sum of the values that intersect the cell
+    """
     QUERY_INSERT = (""" WITH pop_tr AS (
                             SELECT ST_DumpAsPolygons(st_transform(rast, {esri})) as rast
                             FROM raw.{city}_population_{time}
@@ -258,7 +323,16 @@ def population(grid_size, city, esri, time, year_model):
 
     return QUERY_INSERT
 
+
 def dem(grid_size, city, esri):
+    """
+    Geneteras query that inserts:
+        - min_dem: minimum value of the elevation model the intersect the cell
+        - max_dem: maximum value of the elevation model the intersect the cell
+        - mean_dem: mean value of the elevation model the intersect the cell
+        - stddev_dem: standard deviation value of the value of the elevation
+                      model the intersect the cell
+    """
     QUERY_INSERT = (""" WITH dem_tr AS (
                             SELECT ST_DumpAsPolygons(st_transform(rast, {esri})) as rast
                             FROM raw.{city}_dem
@@ -277,7 +351,16 @@ def dem(grid_size, city, esri):
                                                     esri=esri))
     return QUERY_INSERT
 
+
 def slope(grid_size, city, esri):
+    """
+    Geneteras query that inserts:
+        - min_slope_pct: minimum value of the slope that intersects the cell
+        - max_slope_pct: maximum value of the slope that intersects the cell
+        - mean_slope_pct: mean value of the slope that intersects the cell
+        - stddev_slope_pct: standard deviation value of the value of the slope
+                            that intersects the cell
+    """
     QUERY_INSERT = ("""WITH slope_pct AS (
                            SELECT ST_DumpAsPolygons(rast_percent) AS rast_pct
                            FROM raw.{city}_slope
@@ -325,6 +408,21 @@ def slope(grid_size, city, esri):
 
 
 def city_lights(grid_size, city, esri, time, year_model):
+    """
+    Query that inserts the city lights values that intersects the cell
+    for each year data (time) that corresponds to a specific year_model
+    based on a 1000 x 1000 m raster image
+        - min_city_lights: minimum value of the intensity of lights that
+                            intersect the cell
+        - max_city_lights: maximim value of the intensity of lights that
+                            intersect the cell
+        - mean_city_lights: mean value of the intensity of lights that
+                            intersect the cell
+        - stddev_city_lights: standard deviation of the intensity of lights
+                            values that intersect the cell
+        - sum_city_lighst: sum of the intensity of lights
+                            values that intersect the cell
+    """
     QUERY_INSERT = ("""WITH lights_tr AS (
                             SELECT ST_DumpAsPolygons(st_transform(rast, {esri})) AS rast
                             FROM raw.{city}_city_lights_{time}
@@ -348,41 +446,3 @@ def city_lights(grid_size, city, esri, time, year_model):
                                                   esri=esri))
     return QUERY_INSERT
 
-if __name__ == "__main__":
-    grid_size = 250
-    city = 'amman'
-    esri = 32236
-    time = 1990
-    built_threshold = 50
-    population_threshold = 75
-    cluster_threshold = 5000
-    year_model = 1990
-    engine = utils.get_engine()
-    #print('water bodies')
-    #water_bodies(grid_size, city, esri, engine)
-    print(geopins)
-    geopins(grid_size, city, esri, engine)
-    #print('urban_center')
-    #urban_center(grid_size, city, esri, engine)
-    #print('slope')
-    #slope(grid_size, city, esri, engine)
-    #print('highways')
-    #highways(grid_size, city, esri, engine)
-    #print('built_lds')
-    #built_lds(grid_size, city, time, esri, engine)
-    #print('dem')
-    #dem(grid_size, city, esri, engine)
-    #print('popuation')
-    #population(grid_size, city, time, esri, engine)
-    #print('city lights')
-    #city_lights(grid_size, city, time, esri, engine)
-    #print('settlements')
-    #settlements(grid_size, city, time, esri, engine)
-    #print('urban cluster')
-    #urban_clusters(grid_size, city, built_threshold, population_threshold, year_model, engine)
-    #print('built_distance')
-    #built_distance(grid_size, city, built_threshold, time, year_model, esri, engine)
-    #print('urban distance')
-    #urban_distance(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine) 
-    #print('urban neighbours')
-    #urban_neighbours(grid_size, city, built_threshold, population_threshold, cluster_threshold, year_model, engine)
