@@ -82,9 +82,9 @@ class HexagonsSQL(city_task.PostgresTask):
                         c float :=side_length;
                         a float :=c/2;
                         b float :=c * sqrt(3)/2;
-                        height float := 2*a+c;  --1.1547*width;
-                        ncol float :=ceil(abs(xmax-xmin)/width);
-                        nrow float :=ceil(abs(ymax-ymin)/width);
+                        height float := 2*a+c;
+                        ncol float :=ceil(abs(xmax-xmin)/(2*b));
+                        nrow float :=ceil(abs(ymax-ymin)/(2*c));
 
                         polygon_string varchar := 'POLYGON((' ||
                                                             0 || ' ' || 0     || ' , ' ||
@@ -194,6 +194,11 @@ class GenerateTable(city_task.PostgresTask):
         columns_dict (dict): dictionary of names of columns
                         and their type
     """
+    city = luigi.Parameter()
+    grid_size = luigi.Parameter()
+    name = luigi.Parameter()
+    columns_dict = luigi.DictParameter()
+
     def requires(self):
         return PreprocessTask()
 
@@ -210,7 +215,7 @@ class GenerateTable(city_task.PostgresTask):
                                                             ref=ref))
         columns_ref = ", ".join(columns_ref)
         DROP = ("""DROP TABLE IF EXISTS grids.{city}_{name}_{size};"""
-                .format(city=city,
+                .format(city=self.city,
                         size=self.grid_size,
                         name=self.name))
         QUERY = ("""CREATE TABLE grids.{city}_{name}_{size} (
@@ -247,7 +252,7 @@ class GenerateUrbanClusterTable(city_task.PostgresTask):
                       population numeric,
                       built_threshold numeric,
                       population_threshold numeric,
-                      geom geometry):"""
+                      geom geometry);"""
                     .format(city=self.city,
                             size=self.grid_size))
         return DROP + QUERY
