@@ -72,16 +72,16 @@ class HexagonsSQL(city_task.PostgresTask):
     @property
     def query(self):
         drop = ("""DROP FUNCTION genhexagons(float, float, float, float, float);""")
-        create =  ("""CREATE OR REPLACE FUNCTION genhexagons(width float,
+        create =  ("""CREATE OR REPLACE FUNCTION genhexagons(side_length float,
                                                              xmin float,
                                                              ymin float,
                                                              xmax float,
                                                              ymax float)
                     RETURNS float AS $total$
                     declare
-                        b float :=width/2;
-                        a float :=b/2; --sin(30)=.5
-                        c float :=2*a;
+                        c float :=side_length;
+                        a float :=c/2;
+                        b float :=c * sqrt(3)/2;
                         height float := 2*a+c;  --1.1547*width;
                         ncol float :=ceil(abs(xmax-xmin)/width);
                         nrow float :=ceil(abs(ymax-ymin)/width);
@@ -96,7 +96,7 @@ class HexagonsSQL(city_task.PostgresTask):
                                                             0 || ' ' || 0     ||
                                                     '))';
                     BEGIN
-                        INSERT INTO public.grids_{city}_{size}_temp (cell) SELECT st_translate(cell, x_series*(2*a+c)+xmin, y_series*(2*(a +c))+ymin)
+                        INSERT INTO public.grids_{city}_{size}_temp (cell) SELECT st_translate(cell, x_series*(2*b)+xmin, y_series*(2*(a +c))+ymin)
                         from generate_series(0, ncol::int , 1) as x_series,
                         generate_series(0, nrow::int,1 ) as y_series,
                         (
@@ -142,14 +142,14 @@ class GenerateGrid(city_task.PostgresTask):
                          FROM raw.{city}
                     ), geom_bbox as (
                           SELECT
-                               {grid_size} as width,
+                               {grid_size} as side_length,
                                ST_XMin(geom) as xmin,
                                ST_YMin(geom) as ymin,
                                ST_XMax(geom) as xmax,
                                ST_YMax(geom) as ymax
                        FROM buffer_prj
                        GROUP BY geom)
-                       SELECT genhexagons(width,xmin,ymin,xmax,ymax)
+                       SELECT genhexagons(side_length,xmin,ymin,xmax,ymax)
                        FROM geom_bbox;""".format(city=self.city,
                                                  esri=self.esri,
                                                  grid_size=self.grid_size))
