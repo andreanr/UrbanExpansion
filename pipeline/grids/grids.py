@@ -61,7 +61,7 @@ def geopins(grid_size, city, esri):
                            SELECT amenity, aeroway, st_transform(geom, {esri}) as geom
                            FROM raw.{city}_geopins )
                       SELECT cell_id,
-                             min(CASE WHEN amenity IN ('place of worship')
+                             min(CASE WHEN amenity IN ('place_of_worship')
                                    THEN st_distance(st_centroid(cell), ST_ClosestPoint(geom, st_centroid(cell))) / 1000.0
                                   ELSE NULL END) AS worship_distance,
                              min(CASE WHEN  amenity  IN ('school')
