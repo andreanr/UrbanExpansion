@@ -10,6 +10,11 @@ from grids.grid_architect import GenerateUrbanGridsFeatures
 
 
 class FeatureGenerator(city_task.FeaturesTask):
+    """
+    Task that calls feature table generation
+    given the features specified on the
+    experiment configuration
+    """
     features = luigi.ListParameter()
 
     def requires(self):
@@ -34,7 +39,12 @@ class FeatureGenerator(city_task.FeaturesTask):
                                  self.dense_cluster_threshold)
 
 class LabelGenerator(city_task.FeaturesTask):
- 
+    """
+    Taks that generates urban labels based
+    on the definition of urban by the built_lds threshold,
+    population threshold and cluster threshold
+    set on the luigi config file for the train and test years
+    """
     def requires(self):
         return GenerateUrbanGridsFeatures()
 

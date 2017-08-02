@@ -3,7 +3,7 @@ import luigi
 from luigi import configuration
 import pdb
 
-from grids.generate_grids import GenerateGridTables, AddPrimaryKey
+from grids.generate_grids import GenerateGridTables, GenerateGrid
 from grids.grids import *
 from commons import city_task
 import utils
@@ -20,7 +20,7 @@ class GridFeature(city_task.CityGeneralTask):
 
     def requires(self):
        return [GenerateGridTables(self.city, self.grid_size, self.grid_tables_path),
-               AddPrimaryKey(self.city, self.grid_size, self.esri)]
+               GenerateGrid(self.city, self.grid_size, self.esri)]
 
     @property
     def table(self):
