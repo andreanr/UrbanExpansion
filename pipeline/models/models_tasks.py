@@ -33,6 +33,7 @@ class TrainModel(city_task.FeaturesTask):
     table = 'results.models'
 
     def requires(self):
+      
         yield [FeatureGenerator(self.features),
                LabelGenerator()]
 
