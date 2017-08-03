@@ -11,7 +11,7 @@ cat ${DATADIR}/city_lights/ligas_lights.csv | grep $YEAR | awk -F ',' '{print $2
 
 ## Download data for the appropriate year
 for i in $(cat ${DATADIR}/city_lights/$YEAR/temp.txt); 
-	do wget -O $DATADIR/city_lights/$YEAR/$LOCAL_FILE   $i
+	do curl $i --create-dirs -o $DATADIR/city_lights/$YEAR/$LOCAL_FILE
 	break 1
 done
 

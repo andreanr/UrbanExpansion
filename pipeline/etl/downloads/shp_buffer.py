@@ -50,12 +50,13 @@ def project_to_crs(filename, s_crs, t_crs, c_name):
 def shp_to_pg(path, city_name):
     database = os.environ.get("PGDATABASE")
     user = os.environ.get("POSTGRES_USER")
-    # password = os.environ.get("POSTGRES_PASSWORD")
+    password = os.environ.get("POSTGRES_PASSWORD")
     host = os.environ.get("PGHOST")
     # port = os.environ.get("PGPORT")
-    cmd = 'shp2pgsql -s 4326 -d -D -I -W "latin1" ' + path + " raw." + city_name  +\
-          " | psql -d " + database + ' -h ' +\
-          host + ' -U ' + user
+    hosts = "postgresql://{user}:{password}@{host}/{database}"
+    hosts = hosts.format(user=user, password=password, host=host, database=database)
+    cmd = 'shp2pgsql -s 4326 -d -D -I -W "latin1" ' + path + " raw." + city_name +\
+          " | psql" + ' -h ' + hosts
     exec_cmd = run_command(cmd)
     print(exec_cmd)
 
@@ -63,26 +64,28 @@ def shp_to_pg(path, city_name):
 if __name__ == "__main__":
     ox.config(log_file=True, log_console=True, use_cache=True)
     parser = argparse.ArgumentParser()
-    parser.add_argument("--country", type=str, help="pass your country name", default="jordan")
     parser.add_argument("--city", type=str, help="pass your city name", default="amman")
     parser.add_argument("--buffer", type=str, help="pass boundary buffer", default="25000")
+    parser.add_argument("--local_path", type=str, help="path to local download", default="/home/data/shp_buffer")
+    parser.add_argument("--data_task", type=str, help="shp_buffer", default="shp_buffer")
     args = parser.parse_args()
-    country_name = args.country
     city_name = args.city
+    local_path = args.local_path
+    data_task = args.data_task
     buff_dist = int(args.buffer)
     query = {'city': city_name}
     city = ox.gdf_from_place(query, buffer_dist=buff_dist)
     labs = ['bbox_west', 'bbox_south', 'bbox_east', 'bbox_north']
     vals = city.total_bounds
     bbox = dict(zip(labs,vals))
-    path = "/home/data/boundries/" + city_name + "_bbox.json"
+    path = local_path + '/' + data_task + '/' + data_task + ".json"
     with open(path, 'w') as fp:
         json.dump(bbox, fp)
     fn = city_name + ".shp"
-    save_shapefile(city, folder='/home/data/boundries', filename=fn)
+    save_shapefile(city, folder=local_path + '/' + data_task, filename=fn)
     city_boundary = city.ix[0].geometry
     # project_to_crs(filename=fn, folder="shp", s_crs=from_crs, t_crs=to_crs, c_name=country_name)
-    path = "/home/data/boundries/" + fn
+    path = local_path + '/' + data_task + '/' + fn
     shp_to_pg(path, city_name)
 
 
