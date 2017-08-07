@@ -9,7 +9,7 @@ DATADIR=$3
 
 # Cut raster to shp
 for z in *.tif; do
-        gdalwarp -cutline ${DATADIR}/boundries/${CITY}.shp -crop_to_cutline -dstalpha $z ${DATADIR}/city_lights/$YEAR/${z}_${CITY}.tif
+        gdalwarp -cutline ${DATADIR}/shp_buffer/${CITY}.shp -crop_to_cutline -dstalpha $z ${DATADIR}/city_lights/$YEAR/${z}_${CITY}.tif
         break 1
 done
 
