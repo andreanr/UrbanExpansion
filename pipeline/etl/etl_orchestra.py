@@ -8,6 +8,25 @@ from dotenv import load_dotenv,find_dotenv
 
 load_dotenv(find_dotenv())
 
+class InsertDBTasks(luigi.WrapperTask):
+    city = configuration.get_config().get('general','city')
+    insert_tasks = configuration.get_config().get('data','uploads')
+    insert_tasks = [x.strip() for x in list(upload_tasks.split(','))] 
+    local_path = configuration.get_config().get('general','local_path')
+    insert_scripts = configuration.get_config().get('general', 'insert_scripts')
+
+    def requires(self):
+        tasks = []
+        for task_name in self.insert_tasks:
+            try:
+                years = configuration.get_config().get(task_name, 'years')
+                years = [x.strip() for x in list(years.split(','))]
+            except:
+                years = []
+            if len(years) > 0:
+                for year in years:
+                    run_task = eval(task_name)
+
 
 class DownloadTasks(luigi.WrapperTask):
     city = configuration.get_config().get('general','city')
@@ -34,7 +53,7 @@ class DownloadTasks(luigi.WrapperTask):
                                           self.local_path))
             else:
                 run_task = eval(task_name)
-                tasks.append(run_task(' ',
+                tasks.append(run_task('',
                                       self.city,
                                       task_name,
                                       self.download_scripts,
@@ -90,7 +109,7 @@ class LocalDownloadTask(luigi.Task):
 
     def output(self):
         if self.year:
-            param_time = self.year + '/'
+            param_time = self.year #+ '/'
         else:
             param_time = ''
         return luigi.LocalTarget(self.local_path + '/' + self.data_task + '/' +

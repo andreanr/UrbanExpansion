@@ -56,7 +56,8 @@ def shp_to_pg(path, city_name):
     hosts = "postgresql://{user}:{password}@{host}/{database}"
     hosts = hosts.format(user=user, password=password, host=host, database=database)
     cmd = 'shp2pgsql -s 4326 -d -D -I -W "latin1" ' + path + " raw." + city_name +\
-          " | psql" + ' -h ' + hosts
+          " | psql " + hosts 
+
     exec_cmd = run_command(cmd)
     print(exec_cmd)
 
