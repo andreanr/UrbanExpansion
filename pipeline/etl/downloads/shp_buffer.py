@@ -79,7 +79,7 @@ if __name__ == "__main__":
     labs = ['bbox_west', 'bbox_south', 'bbox_east', 'bbox_north']
     vals = city.total_bounds
     bbox = dict(zip(labs,vals))
-    path = local_path + '/' + data_task + '/' + data_task + ".json"
+    path = local_path + '/' + data_task + '/' + city_name + '_' + data_task + ".json"
     with open(path, 'w') as fp:
         json.dump(bbox, fp)
     fn = city_name + ".shp"

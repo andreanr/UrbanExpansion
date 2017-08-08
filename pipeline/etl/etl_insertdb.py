@@ -5,66 +5,56 @@ import subprocess
 from luigi import configuration
 from luigi.contrib import postgres
 from dotenv import load_dotenv,find_dotenv
+from commons import city_task
 
 load_dotenv(find_dotenv())
 
-class InsertDBTasks(luigi.WrapperTask):
-    city = configuration.get_config().get('general','city')
-    insert_tasks = configuration.get_config().get('data','uploads')
-    insert_tasks = [x.strip() for x in list(upload_tasks.split(','))] 
-    local_path = configuration.get_config().get('general','local_path')
-    insert_scripts = configuration.get_config().get('general', 'insert_scripts')
+#class InsertDBTasks(luigi.WrapperTask):
+#    city = configuration.get_config().get('general','city')
+#    insert_tasks = configuration.get_config().get('data','uploads')
+#    insert_tasks = [x.strip() for x in list(upload_tasks.split(','))] 
+#    local_path = configuration.get_config().get('general','local_path')
+#    insert_scripts = configuration.get_config().get('general', 'insert_scripts')
+#
+#    def requires(self):
+#        tasks = []
+#        for task_name in self.insert_tasks:
+#            try:
+#                years = configuration.get_config().get(task_name, 'years')
+#                years = [x.strip() for x in list(years.split(','))]
+#            except:
+#                years = []
+#            if len(years) > 0:
+#                for year in years:
+#                    tasks.append(
 
-    def requires(self):
-        tasks = []
-        for task_name in self.insert_tasks:
-            try:
-                years = configuration.get_config().get(task_name, 'years')
-                years = [x.strip() for x in list(years.split(','))]
-            except:
-                years = []
-            if len(years) > 0:
-                for year in years:
-                    run_task = eval(task_name)
+class built_lds(city_task.PostgresTask):
+    
+    city = 'irbid' # luigi.Parameter()
+    year = '2000' #luigi.Parameter()
+    local_path = '/home/data' # luigi.Parameter()
+    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    
+    @property
+    def update_id(self):
+        return "built_lds" + "__" + self.city + ':' + self.year
 
-
-###################
-#   DATA INGEST
-##################
-
-
-class LocalUploadTask(luigi.Task):
-    year = luigi.Parameter()
-    city = luigi.Parameter()
-    data_task = luigi.Parameter()
-    insert_scripts = luigi.Parameter()
-    local_path = luigi.Parameter()
-
-    def output(self):
-        if self.year:
-            param_time = self.year #+ '/'
-        else:
-            param_time = ''
-        return luigi.LocalTarget(self.local_path + '/' + self.data_task + '/' +
-                                 param_time + '/' + self.data_task + self.file_type)
-
-###################
-#    EACH DATA
-###################
-
-
-class built_lds(LocalDownloadTask):
-    file_type = '.zip'
-
-    def run(self):
-        if not os.path.exists(self.local_path + '/' + self.data_task):
-            os.makedirs(self.local_path + '/' + self.data_task)
-        if not os.path.exists(self.local_path + '/' + self.data_task + '/' + self.year):
-            os.makedirs(self.local_path + '/' + self.data_task + '/' + self.year)
-        command_list = ['sh', self.download_scripts + "built_lds.sh",
+    @property
+    def table(self):
+        return """raw.{city}_built_lds_{year}""".format(city=self.city,
+                                                        year=self.year)
+    @property
+    def query(self):
+        command_list = ['sh', self.insert_scripts + "built_lds.sh",
                         self.city,
                         self.year,
-                        self.local_path,
-                        self.data_task + self.file_type]
+                        self.local_path]
         cmd = " ".join(command_list)
-        return subprocess.call([cmd], shell=True)
+        subprocess.call([cmd], shell=True)
+        with open(self.local_path + '/built_lds/' + self.year + '/built_lds_' +
+                  self.city + '.sql', 'r') as myfile:
+            query_str = myfile.read()
+
+        return query_str
+
+

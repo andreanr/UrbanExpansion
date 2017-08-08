@@ -27,15 +27,14 @@ class DownloadTasks(luigi.WrapperTask):
             if len(years)>0:
                 for year in years:
                     run_task = eval(task_name)
-                    tasks.append(run_task(year, 
-                                          self.city, 
+                    tasks.append(run_task(self.city, 
                                           task_name,
                                           self.download_scripts,
-                                          self.local_path))
+                                          self.local_path,
+                                          year))
             else:
                 run_task = eval(task_name)
-                tasks.append(run_task('',
-                                      self.city,
+                tasks.append(run_task(self.city,
                                       task_name,
                                       self.download_scripts,
                                       self.local_path))
@@ -82,19 +81,26 @@ class CreateSchemas(luigi.WrapperTask):
 
 
 class LocalDownloadTask(luigi.Task):
-    year = luigi.Parameter()
     city = luigi.Parameter()
     data_task = luigi.Parameter()
     download_scripts = luigi.Parameter()
     local_path = luigi.Parameter()
 
     def output(self):
-        if self.year:
-            param_time = self.year #+ '/'
-        else:
+        try:
+            global_param =  configuration.get_config().get(self.data_task, 'global')
+            local_file = self.data_task + self.file_type
+        except:
+            local_file = self.city + '_' + self.data_task + self.file_type
+
+        try:
+            if self.year:
+                param_time = self.year #+ '/'
+        except:
             param_time = ''
+
         return luigi.LocalTarget(self.local_path + '/' + self.data_task + '/' +
-                                 param_time + '/' + self.data_task + self.file_type)
+                                 param_time + '/' + local_file)
 
 ###################
 #    EACH DATA
@@ -103,8 +109,15 @@ class LocalDownloadTask(luigi.Task):
 
 class built_lds(LocalDownloadTask):
     file_type = '.zip'
+    year = luigi.Parameter()
 
     def run(self):
+        try:
+           global_param = configuration.get_config().get(self.data_task, 'global')
+           local_file = self.data_task + self.file_type
+        except:
+           local_file = self.city + '_' + self.data_task + self.file_type
+
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
         if not os.path.exists(self.local_path + '/' + self.data_task + '/' + self.year):
@@ -113,15 +126,22 @@ class built_lds(LocalDownloadTask):
                         self.city,
                         self.year,
                         self.local_path,
-                        self.data_task + self.file_type]
+                        local_file]
         cmd = " ".join(command_list)
         return subprocess.call([cmd], shell=True)
 
 
 class population(LocalDownloadTask):
     file_type = '.zip'
+    year = luigi.Parameter()
 
     def run(self):
+        try:
+           global_param = configuration.get_config().get(self.data_task, 'global')
+           local_file = self.data_task + self.file_type
+        except:
+           local_file = self.city + '_' + self.data_task + self.file_type
+
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
         if not os.path.exists(self.local_path + '/' + self.data_task + '/' + self.year):
@@ -131,15 +151,22 @@ class population(LocalDownloadTask):
                         self.city,
                         self.year,
                         self.local_path,
-                        self.data_task + self.file_type]
+                        local_file]
         cmd = " ".join(command_list)
         return subprocess.call([cmd], shell=True)
 
 
 class settlements(LocalDownloadTask):
     file_type = '.zip'
+    year = luigi.Parameter()
 
     def run(self):
+        try:
+           global_param = configuration.get_config().get(self.data_task, 'global')
+           local_file = self.data_task + self.file_type
+        except:
+           local_file = self.city + '_' + self.data_task + self.file_type
+
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
         if not os.path.exists(self.local_path + '/' + self.data_task + '/' + self.year):
@@ -149,15 +176,22 @@ class settlements(LocalDownloadTask):
                         self.city,
                         self.year,
                         self.local_path,
-                        self.data_task + self.file_type]
+                        local_file]
         cmd = " ".join(command_list)
         return subprocess.call([cmd], shell=True)
 
 
 class city_lights(LocalDownloadTask):
     file_type = '.tgz'
+    year = luigi.Parameter()
 
     def run(self):
+        try:
+           global_param = configuration.get_config().get(self.data_task, 'global')
+           local_file = self.data_task + self.file_type
+        except:
+           local_file = self.city + '_' + self.data_task + self.file_type
+
         if not os.path.exists(self.local_path + '/' +self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
         if not os.path.exists(self.local_path + '/' + self.data_task + '/' + self.year):
@@ -167,7 +201,7 @@ class city_lights(LocalDownloadTask):
                         self.city,
                         self.year,
                         self.local_path,
-                        self.data_task + self.file_type]
+                        local_file]
         cmd = " ".join(command_list)
         return subprocess.call([cmd], shell=True)
 
@@ -176,26 +210,18 @@ class water_bodies(LocalDownloadTask):
     file_type = '.zip'
 
     def run(self):
+        try:
+           global_param = configuration.get_config().get(self.data_task, 'global')
+           local_file = self.data_task + self.file_type
+        except:
+           local_file = self.city + '_' + self.data_task + self.file_type
+
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
         command_list = ['sh', self.download_scripts + "water_bodies.sh",
                         self.city,
                         self.local_path,
-                        self.data_task + self.file_type]
-        cmd = " ".join(command_list)
-        return subprocess.call([cmd], shell=True)
-
-
-class dem(LocalDownloadTask):
-    file_type = '.zip'
-
-    def run(self):
-        if not os.path.exists(self.local_path + '/' + self.data_task):
-            os.makedirs(self.local_path + '/' + self.data_task)
-        command_list = ['sh', self.download_scripts + "dem.sh",
-                        self.city,
-                        self.local_path,
-                        self.data_task + self.file_type]
+                        local_file]
         cmd = " ".join(command_list)
         return subprocess.call([cmd], shell=True)
 
@@ -207,7 +233,6 @@ class shp_buffer(LocalDownloadTask):
     def run(self):
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
-
         command_list = ['python', self.download_scripts + "shp_buffer.py",
                         '--city', self.city,
                         '--buffer', self.buffer_dist,
@@ -218,4 +243,72 @@ class shp_buffer(LocalDownloadTask):
         return subprocess.call([cmd], shell=True)
 
 
+class dem(LocalDownloadTask):
+    file_type = '.tif'
+    
+    def requires(self):
+        return shp_buffer(self.city, 
+                          'shp_buffer',
+                          self.download_scripts,
+                          self.local_path)
+    
+    def run(self):
+        try:
+            global_param = configuration.get_config().get(self.data_task, 'global')
+            local_file = self.data_task + self.file_type
+        except:
+           local_file = self.city + '_' + self.data_task + self.file_type
 
+        if not os.path.exists(self.local_path + '/' + self.data_task):
+            os.makedirs(self.local_path + '/' + self.data_task)
+        command_list = ['sh', self.download_scripts + "dem.sh",
+                        self.local_path,
+                        self.data_task,
+                        self.city,
+                        local_file]
+        cmd = " ".join(command_list)
+        return subprocess.call([cmd], shell=True)
+
+
+class highways(LocalDownloadTask):
+    file_type = '.shp'
+    timeout = luigi.Parameter()
+
+    def run(self):
+        try:
+            global_param = configuration.get_config().get(self.data_task, 'global')
+            local_file = self.data_task + self.file_type
+        except:
+            local_file = self.city + '_' + self.data_task + self.file_type
+            
+        if not os.path.exists(self.local_path + '/' + self.data_task):
+            os.makedirs(self.local_path + '/' + self.data_task)
+        command_list = ['python', self.download_scripts + "highways.py",
+                        '--city', self.city,
+                        '--timeout', self.timeout,
+                        '--local_path', self.local_path]
+        cmd = " ".join(command_list)
+        print(cmd)
+        return subprocess.call([cmd], shell=True)
+
+
+class geopins(LocalDownloadTask):
+    file_type = '.shp'
+    timeout = luigi.Parameter()
+
+    def run(self):
+        try:
+            global_param = configuration.get_config().get(self.data_task, 'global')
+            local_file = self.data_task + self.file_type
+        except:
+            local_file = self.city + '_' + self.data_task + self.file_type
+            
+        if not os.path.exists(self.local_path + '/' + self.data_task):
+            os.makedirs(self.local_path + '/' + self.data_task)
+        command_list = ['python', self.download_scripts + "geopins.py",
+                        '--city', self.city,
+                        '--timeout', self.timeout,
+                        '--local_path', self.local_path]
+        cmd = " ".join(command_list)
+        print(cmd)
+        return subprocess.call([cmd], shell=True)
