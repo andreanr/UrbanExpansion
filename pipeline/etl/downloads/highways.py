@@ -8,8 +8,7 @@ import fiona
 import pandas as pd
 import geopandas as gpd
 import time
-# import pdb
-# import pickle
+import pdb
 
 from progress.bar import Bar # sudo pip install progress
 from pandas.io.common import urlencode
@@ -54,12 +53,12 @@ def get_path(element):
     return path
 
 
-def get_highways(bbox_city):
+def get_highways(bbox_city, local_path):
     """
     :return: GeoDataFrame con highways
     """
 
-    url = define_url(bbox_city=bbox_city)
+    url = define_url(bbox_city=bbox_city, local_path=local_path)
     # pdb.set_trace()
     response = requests.get(url)
     # pickle.dump(response, open("response.p", "wb"))
@@ -136,7 +135,7 @@ def get_highways(bbox_city):
     return nodes, gdf_paths
 
 
-def define_url(bbox_city, recurse='down', meta=True):
+def define_url(bbox_city, local_path, recurse='down', meta=True):
     """
     url for Overpass API request
     :param bbox_city: diccionario con bounding box
@@ -162,7 +161,7 @@ def define_url(bbox_city, recurse='down', meta=True):
     # turn bbox into a polygon
     polygon = Polygon([(west, south), (east, south), (east, north), (west, north)])
     polygon.crs = _crs
-    ppth = "/home/data/boundries/" + city_name + "_bbox.shp"
+    ppth = local_path + "/shp_buffer/" + city_name + ".shp"
     # Define a polygon feature geometry with one attribute
     schema = {
         'geometry': 'Polygon',
@@ -191,15 +190,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--city", type=str, help="pass your city name", default="amman")
     parser.add_argument("--timeout", type=float, help="specify timeout for API request", default=180)
+    parser.add_argument("--local_path",type=str, help="local path to download files", default="/home/data")
     args = parser.parse_args()
     city_name = args.city
     timeout = args.timeout
-    pth = "/home/data/boundries/" + city_name + "_bbox.json"
+    local_path = args.local_path
+    pth = local_path + "/shp_buffer/" + city_name + '_shp_buffer' + ".json"
     bbox_file = open(pth)
     bbox = json.load(bbox_file)
     start = time.time()
-    nodes_highways, paths_highways = get_highways(bbox)
-    pth = "/home/data/highways/" + city_name + "_highways.shp"
+    nodes_highways, paths_highways = get_highways(bbox, local_path)
+    pth = local_path + "/highways/" + city_name + "_highways.shp"
     paths_highways.to_file(pth)
     end = time.time()
     t = end - start

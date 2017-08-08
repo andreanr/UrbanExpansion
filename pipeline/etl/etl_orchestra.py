@@ -87,11 +87,10 @@ class LocalDownloadTask(luigi.Task):
     local_path = luigi.Parameter()
 
     def output(self):
-        # For global files do not inlcude the name of the city on the file
         try:
-            global = configuration.get_config().get(self.data_task, 'global')
+            global_param =  configuration.get_config().get(self.data_task, 'global')
             local_file = self.data_task + self.file_type
-        expcept:
+        except:
             local_file = self.city + '_' + self.data_task + self.file_type
 
         try:
@@ -114,9 +113,9 @@ class built_lds(LocalDownloadTask):
 
     def run(self):
         try:
-           global = configuration.get_config().get(self.data_task, 'global')
+           global_param = configuration.get_config().get(self.data_task, 'global')
            local_file = self.data_task + self.file_type
-        expcept:
+        except:
            local_file = self.city + '_' + self.data_task + self.file_type
 
         if not os.path.exists(self.local_path + '/' + self.data_task):
@@ -138,9 +137,9 @@ class population(LocalDownloadTask):
 
     def run(self):
         try:
-           global = configuration.get_config().get(self.data_task, 'global')
+           global_param = configuration.get_config().get(self.data_task, 'global')
            local_file = self.data_task + self.file_type
-        expcept:
+        except:
            local_file = self.city + '_' + self.data_task + self.file_type
 
         if not os.path.exists(self.local_path + '/' + self.data_task):
@@ -163,9 +162,9 @@ class settlements(LocalDownloadTask):
 
     def run(self):
         try:
-           global = configuration.get_config().get(self.data_task, 'global')
+           global_param = configuration.get_config().get(self.data_task, 'global')
            local_file = self.data_task + self.file_type
-        expcept:
+        except:
            local_file = self.city + '_' + self.data_task + self.file_type
 
         if not os.path.exists(self.local_path + '/' + self.data_task):
@@ -188,9 +187,9 @@ class city_lights(LocalDownloadTask):
 
     def run(self):
         try:
-           global = configuration.get_config().get(self.data_task, 'global')
+           global_param = configuration.get_config().get(self.data_task, 'global')
            local_file = self.data_task + self.file_type
-        expcept:
+        except:
            local_file = self.city + '_' + self.data_task + self.file_type
 
         if not os.path.exists(self.local_path + '/' +self.data_task):
@@ -212,9 +211,9 @@ class water_bodies(LocalDownloadTask):
 
     def run(self):
         try:
-           global = configuration.get_config().get(self.data_task, 'global')
+           global_param = configuration.get_config().get(self.data_task, 'global')
            local_file = self.data_task + self.file_type
-        expcept:
+        except:
            local_file = self.city + '_' + self.data_task + self.file_type
 
         if not os.path.exists(self.local_path + '/' + self.data_task):
@@ -255,9 +254,9 @@ class dem(LocalDownloadTask):
     
     def run(self):
         try:
-           global = configuration.get_config().get(self.data_task, 'global')
-           local_file = self.data_task + self.file_type
-        expcept:
+            global_param = configuration.get_config().get(self.data_task, 'global')
+            local_file = self.data_task + self.file_type
+        except:
            local_file = self.city + '_' + self.data_task + self.file_type
 
         if not os.path.exists(self.local_path + '/' + self.data_task):
@@ -268,4 +267,48 @@ class dem(LocalDownloadTask):
                         self.city,
                         local_file]
         cmd = " ".join(command_list)
+        return subprocess.call([cmd], shell=True)
+
+
+class highways(LocalDownloadTask):
+    file_type = '.shp'
+    timeout = luigi.Parameter()
+
+    def run(self):
+        try:
+            global_param = configuration.get_config().get(self.data_task, 'global')
+            local_file = self.data_task + self.file_type
+        except:
+            local_file = self.city + '_' + self.data_task + self.file_type
+            
+        if not os.path.exists(self.local_path + '/' + self.data_task):
+            os.makedirs(self.local_path + '/' + self.data_task)
+        command_list = ['python', self.download_scripts + "highways.py",
+                        '--city', self.city,
+                        '--timeout', self.timeout,
+                        '--local_path', self.local_path]
+        cmd = " ".join(command_list)
+        print(cmd)
+        return subprocess.call([cmd], shell=True)
+
+
+class geopins(LocalDownloadTask):
+    file_type = '.shp'
+    timeout = luigi.Parameter()
+
+    def run(self):
+        try:
+            global_param = configuration.get_config().get(self.data_task, 'global')
+            local_file = self.data_task + self.file_type
+        except:
+            local_file = self.city + '_' + self.data_task + self.file_type
+            
+        if not os.path.exists(self.local_path + '/' + self.data_task):
+            os.makedirs(self.local_path + '/' + self.data_task)
+        command_list = ['python', self.download_scripts + "geopins.py",
+                        '--city', self.city,
+                        '--timeout', self.timeout,
+                        '--local_path', self.local_path]
+        cmd = " ".join(command_list)
+        print(cmd)
         return subprocess.call([cmd], shell=True)

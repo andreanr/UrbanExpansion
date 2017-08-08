@@ -16,10 +16,10 @@ awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'$KEY'\042/){print $(i+1)}}}' | tr -d 
 }
 
 
-SOUTH=$(cat $DATADIR/shp_buffer/shp_buffer_${CITY}.json | jsonValue bbox_south)
-WEST=$(cat $DATADIR/shp_buffer/shp_buffer_${CITY}.json | jsonValue bbox_west)
-EAST=$(cat $DATADIR/shp_buffer/shp_buffer_${CITY}.json | jsonValue bbox_east)
-NORTH=$(cat $DATADIR/shp_buffer/shp_buffer_${CITY}.json | jsonValue bbox_north)
+SOUTH=$(cat $DATADIR/shp_buffer/${CITY}_shp_buffer.json | jsonValue bbox_south)
+WEST=$(cat $DATADIR/shp_buffer/${CITY}_shp_buffer.json | jsonValue bbox_west)
+EAST=$(cat $DATADIR/shp_buffer/${CITY}_shp_buffer.json | jsonValue bbox_east)
+NORTH=$(cat $DATADIR/shp_buffer/${CITY}_shp_buffer.json | jsonValue bbox_north)
 
 echo $NORTH
 echo $WEST

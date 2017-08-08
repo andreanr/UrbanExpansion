@@ -30,11 +30,15 @@ load_dotenv(find_dotenv())
 
 class built_lds(city_task.PostgresTask):
     
-    city = 'amman' # luigi.Parameter()
-    year = '1990' #luigi.Parameter()
+    city = 'irbid' # luigi.Parameter()
+    year = '2000' #luigi.Parameter()
     local_path = '/home/data' # luigi.Parameter()
     insert_scripts = 'etl/insert_db/' # luigi.Parameter()
     
+    @property
+    def update_id(self):
+        return "built_lds" + "__" + self.city + ':' + self.year
+
     @property
     def table(self):
         return """raw.{city}_built_lds_{year}""".format(city=self.city,
@@ -46,13 +50,11 @@ class built_lds(city_task.PostgresTask):
                         self.year,
                         self.local_path]
         cmd = " ".join(command_list)
-        pdb.set_trace()
         subprocess.call([cmd], shell=True)
-        pdb.set_trace()
         with open(self.local_path + '/built_lds/' + self.year + '/built_lds_' +
                   self.city + '.sql', 'r') as myfile:
-            query = myfile.read()
-        pdb.set_trace()
-        return query
+            query_str = myfile.read()
+
+        return query_str
 
 
