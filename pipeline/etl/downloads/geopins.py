@@ -151,15 +151,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--city", type=str, help="pass your city name", default="amman")
     parser.add_argument("--timeout", type=float, help="specify timeout for API request", default=180)
+    parser.add_argument("--local_path", type=str, help="local path to file download", default="/home/data")
     args = parser.parse_args()
     city_name = args.city
     timeout = args.timeout
-    pth = "/home/data/boundries/" + city_name + "_bbox.json"
+    local_path = args.local_path
+    pth = local_path + "/shp_buffer/" + city_name + "_shp_buffer.json"
     bbox_file = open(pth)
     bbox = json.load(bbox_file)
     start = time.time()
     nodes_points = get_data_points(bbox)
-    pth = "/home/data/geopins/" + city_name + "_geopins.shp"
+    pth = local_path + "/geopins/" + city_name + "_geopins.shp"
     nodes_points.to_file(pth)
     end = time.time()
     t = end - start
