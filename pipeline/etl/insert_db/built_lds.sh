@@ -4,10 +4,8 @@
 
 CITY=$1
 YEAR=$2
-
 DATADIR=$3
 
-### aqui
 echo 'transform Countries'
 ogr2ogr -t_srs EPSG:54009 ${DATADIR}/shp_buffer/${CITY}_54009.shp ${DATADIR}/shp_buffer/${CITY}.shp
 
