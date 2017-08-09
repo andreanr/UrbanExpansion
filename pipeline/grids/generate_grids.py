@@ -3,16 +3,7 @@ import pdb
 from luigi.contrib import postgres
 import utils
 from commons import city_task
-
-
-class PreprocessTask(luigi.Task):
-    def run(self):
-        with self.output().open('w') as f:
-             f.write('done')
-
-    def output(self):
-        return luigi.LocalTarget("testing.txt")
-
+from etl.preprocess import PreprocessTask
 
 class CreateTmpTable(city_task.PostgresTask):
     """
