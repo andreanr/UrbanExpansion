@@ -3,16 +3,7 @@ import pdb
 from luigi.contrib import postgres
 import utils
 from commons import city_task
-
-
-class PreprocessTask(luigi.Task):
-    def run(self):
-        with self.output().open('w') as f:
-             f.write('done')
-
-    def output(self):
-        return luigi.LocalTarget("testing.txt")
-
+from etl.preprocess import PreprocessTask
 
 class CreateTmpTable(city_task.PostgresTask):
     """
@@ -27,6 +18,10 @@ class CreateTmpTable(city_task.PostgresTask):
 
     def requires(self):
         return PreprocessTask()
+
+    @property
+    def update_id(self):
+        return """CreateTmpTable__{city}:{size}""".format(city=self.city, size=self.grid_size)
 
     @property
     def table(self):
@@ -64,6 +59,10 @@ class HexagonsSQL(city_task.PostgresTask):
     def requires(self):
         return CreateTmpTable(self.city, self.grid_size)
 
+    @property
+    def update_id(self):
+        return """HexagonsSQL__{city}:{size}""".format(city=self.city,
+                                                       size=self.grid_size)
     @property
     def table(self):
         return """public.grids_{city}_{size}_temp""".format(city=self.city,
@@ -130,6 +129,10 @@ class GenerateGrid(city_task.PostgresTask):
                            self.grid_size,
                            self.esri)
 
+    @property
+    def update_id(self):
+        return """GenerateGrid__{city}:{size}""".format(city=self.city,
+                                                        size=self.grid_size)
     @property
     def table(self):
         return """grids.{city}_grid_{size}""".format(city=self.city,
@@ -203,6 +206,11 @@ class GenerateTable(city_task.PostgresTask):
         return PreprocessTask()
 
     @property
+    def update_id(self):
+        return """GenerateTable__{city}:{size}:{name}""".format(city=self.city,
+                                                                size=self.grid_size,
+                                                                name=self.name)
+    @property
     def table(self):
         return """grids.{city}_{name}_{size}""".format(city=self.city,
                                                        name=self.name,
@@ -238,6 +246,10 @@ class GenerateUrbanClusterTable(city_task.PostgresTask):
     def requires(self):
         return PreprocessTask()
 
+    @property
+    def update_id(self):
+        return """GenerateUrbanClusterTable__{city}:{size}""".format(city=self.city,
+                                                                size=self.grid_size)
     @property
     def table(self):
         return """grids.{city}_urban_clusters_{size}""".format(city=self.city,

@@ -201,7 +201,8 @@ if __name__ == "__main__":
     start = time.time()
     nodes_highways, paths_highways = get_highways(bbox, local_path)
     pth = local_path + "/highways/" + city_name + "_highways.shp"
-    paths_highways.to_file(pth)
+    df = paths_highways[['geometry']]
+    df.to_file(pth)
     end = time.time()
     t = end - start
     m, s = divmod(t, 60)
