@@ -23,7 +23,6 @@ CREATE TABLE results.predictions (
   model_id       INT REFERENCES results.models (model_id),
   city           TEXT,
   year_features  INT,
-  label_range    INT[],
   cell_id        INT,
   score          REAL,
   label          BOOL

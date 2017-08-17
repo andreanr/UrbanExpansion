@@ -43,7 +43,7 @@ def get_data(db_engine,
 
     data = pd.read_sql(query, db_engine)
     data.set_index('cell_id', inplace=True)
-    return data.ix[:, data.columns != 'label'], data['label']
+    return np.array(data.ix[:, data.columns != 'label']), np.array(data['label']), data.index
 
 
 def get_feature_importances(model):
@@ -175,7 +175,6 @@ def store_predictions(db_engine,
                       model_id,
                       city,
                       year_features,
-                      label_range,
                       cell_id,
                       scores,
                       test_y):
@@ -187,7 +186,6 @@ def store_predictions(db_engine,
     dataframe_for_insert = pd.DataFrame( {"model_id": model_id,
                                           "city": city,
                                           "year_features": year_features,
-                                          "label_range": label_range,
                                           "cell_id": cell_id,
                                           "score": scores,
                                           "label": test_y})
@@ -225,7 +223,7 @@ def store_evaluations(engine, model_id, city, years, type_validation, metrics):
             metric_cutoff = 'Null'
         query = ("""INSERT INTO results.evaluations(model_id,
                                                     city,
-                                                    years_test,
+                                                    years,
                                                     type_validation,
                                                     metric,
                                                     cutoff,
@@ -233,7 +231,7 @@ def store_evaluations(engine, model_id, city, years, type_validation, metrics):
                    VALUES( {0}, '{1}', ARRAY{2}, '{3}',  '{4}', {5}, {6}) """
                    .format( model_id,
                             city,
-                            year_test,
+                            years,
                             type_validation,
                             metric,
                             metric_cutoff,

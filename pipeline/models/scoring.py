@@ -67,6 +67,6 @@ def calculate_all_evaluation_metrics( test_label, test_predictions):
 
 def cv_evaluation_metrics(fold_metrics):
 
-    df_metrics = pd.DataFrame.from_dict(user_dict)
+    df_metrics = pd.DataFrame.from_dict(fold_metrics)
     metrics = df_metrics.T.mean().to_dict()
     return metrics

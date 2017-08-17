@@ -28,7 +28,7 @@ class CityGeneralTask(PostgresTask):
 
 
 class FeaturesTask(CityGeneralTask):
-    years_train = json.loads(configuration.get_config().get('general', 'year_train'))
+    years_train = json.loads(configuration.get_config().get('general', 'years_train'))
     year_predict = configuration.get_config().get('general', 'year_predict')
     label_range = json.loads(configuration.get_config().get('general', 'label_range'))
     features_table_prefix = configuration.get_config().get('general','features_table_prefix')

@@ -23,7 +23,7 @@ class CVModel(city_task.FeaturesTask):
     features = luigi.ListParameter()
     timestamp = datetime.datetime.now()
     table = 'results.models'
-    n_folds = city = configuration.get_config().get('general','n_folds')
+    n_folds = int(configuration.get_config().get('general','n_folds'))
 
     @property
     def query(self):
@@ -52,7 +52,7 @@ class CVModel(city_task.FeaturesTask):
 
         # commit and close connection
         print('Get data')
-        X, y = model_utils.get_data(engine,
+        X, y, X_indexes = model_utils.get_data(engine,
                                     self.years_train,
                                     self.city,
                                     self.features,
@@ -69,45 +69,56 @@ class CVModel(city_task.FeaturesTask):
             X_train, X_test = X[train_index], X[test_index]
             y_train, y_test = y[train_index], y[test_index]
             # Train
+            print('train model for fold {0}'.format(folds))
             modelobj = model_utils.define_model(self.model, parameters)
             modelobj.fit(X_train, y_train)
             # Test
-            X_test['scores'] = model_utils.predict_model(modelobj, X_test)
+            print('test model for fold {0}'.format(folds))
+            scores = model_utils.predict_model(modelobj, X_test)
             # Scoring
-            fold_metrics[folds] = scoring.calculate_all_evaluation_metrics(test_y, test_x['scores'])
+            folds_metrics[folds] = scoring.calculate_all_evaluation_metrics(y_test, scores)
             folds += 1
 
+        # Train with all data
+        modelobj = model_utils.define_model(self.model, parameters)
+        print('fit model')
+        modelobj.fit(X, y)
+
+        print('get feature importances')
+        importances = model_utils.get_feature_importances(modelobj)
+        sql = self.query
+        cursor.execute(sql)
+        connection.commit()
+
+        # get model_id
+        model_id = model_utils.get_model_id(engine, self.model, self.city, parameters, self.timestamp)
+        model_utils.store_importances(engine, model_id, self.city, self.features, importances)
+
         # Obtain averages of metrics for all folds
-        metrics = scoring.cv_evaluation_metrics(fold_metrics)
+        metrics = scoring.cv_evaluation_metrics(folds_metrics)
         model_utils.store_evaluations(engine,
                                       model_id,
                                       self.city,
                                       self.years_train,
                                       'cv',
                                       metrics)
-        # Train with all data
-        modelobj = model_utils.define_model(self.model, parameters)
-        print('fit model')
-        modelobj.fit(train_x, train_y)
 
         if self.year_predict:
             print('predicting')
-            predict_x, predict_y = model_utils.get_data(engine,
+            predict_x, predict_y, predict_index = model_utils.get_data(engine,
                                                         [self.year_predict],
                                                         self.city,
                                                         self.features,
                                                         self.grid_size,
                                                         self.features_table_prefix,
                                                         self.labels_table_prefix)
-
-            predict_x['scores'] = model_utils.predict_model(modelobj, predict_x)
+            scores = model_utils.predict_model(modelobj, predict_x)
             model_utils.store_predictions(engine,
                                           model_id,
                                           self.city,
                                           self.year_predict,
-                                          self.label_range,
-                                          predict_x.index,
-                                          predict_x['scores'],
+                                          predict_index,
+                                          scores,
                                           predict_y)
         # Update marker table
         self.output().touch(connection)
