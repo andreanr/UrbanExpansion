@@ -23,6 +23,7 @@ class CVModel(city_task.FeaturesTask):
     features = luigi.ListParameter()
     timestamp = datetime.datetime.now()
     table = 'results.models'
+    n_folds = city = configuration.get_config().get('general','n_folds')
 
     @property
     def query(self):
@@ -60,7 +61,7 @@ class CVModel(city_task.FeaturesTask):
                                     self.labels_table_prefix)
 
         parameters = dict(self.parameters)
-        kf = KFold(n_splits=5)
+        kf = KFold(n_splits=self.n_folds)
         kf.get_n_splits(X)
         folds_metrics = dict()
         folds = 1
