@@ -23,6 +23,13 @@ class GridFeature(city_task.CityGeneralTask):
                GenerateGrid(self.city, self.grid_size, self.esri)]
 
     @property
+    def update_id(self):
+        return """GridFeature__{feature}:{year_data}:{year_model}_{city}:{size}""".format(city=self.city,
+                                                                                          feature=self.feature,
+                                                                                          size=self.grid_size,
+                                                                                          year_data=self.year_data,
+                                                                                          year_model=self.year_model)
+    @property
     def table(self):
         return """grids.{city}_{feature}_{size}""".format(city=self.city,
                                                           feature=self.feature,
@@ -80,6 +87,13 @@ class UrbanCluster(city_task.CityGeneralTask):
         return GenerateGridsFeatures(self.grid_tables_path)
 
     @property
+    def update_id(self):
+        return """UrbanCluster__{city}:{size}:{year}_{built}:{pop}""".format(city=self.city,
+                                                                             size=self.grid_size,
+                                                                             built=self.built_threshold,
+                                                                             pop=self.population_threshold,
+                                                                             year=self.year_model)
+    @property
     def table(self):
         return """grids.{city}_urban_clusters_{size}""".format(city=self.city,
                                                                size=self.grid_size)
@@ -126,6 +140,16 @@ class UrbanGridFeature(city_task.CityGeneralTask):
     def requires(self):
         return UrbanClusters()
 
+    @property
+    def update_id(self):
+        return ("""UrbanGridFeature__{feature}_{city}:{size}:{year}_{built}:{pop}:{cluster}"""
+                 .format(feature=self.feature,
+                         city=self.city,
+                         size=self.grid_size,
+                         year=self.year_model,
+                         built=self.built_threshold,
+                         pop=self.population_threshold,
+                         cluster=self.cluster_threshold))
     @property
     def table(self):
         return """grids.{city}_{feature}_{size}""".format(city=self.city,
