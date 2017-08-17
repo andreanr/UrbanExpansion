@@ -65,4 +65,8 @@ def calculate_all_evaluation_metrics( test_label, test_predictions):
         all_metrics["auc@|{}".format(str(cutoff))] = (TP + TN) / ((TP + TN + FP + FN)*1.0)
     return all_metrics
 
+def cv_evaluation_metrics(fold_metrics):
 
+    df_metrics = pd.DataFrame.from_dict(user_dict)
+    metrics = df_metrics.T.mean().to_dict()
+    return metrics

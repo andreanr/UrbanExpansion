@@ -9,22 +9,24 @@ CREATE TABLE results.models (
   model_type            TEXT,
   model_parameters      JSONB,
   features              TEXT[],
-  year_train            INT,
+  years_train           INT[],
   grid_size             INT,
   built_threshold       NUMERIC,
   population_threshold  NUMERIC,
   cluster_threshold     NUMERIC,
+  label_range           INT[],
   model_comment         TEXT
 );
 
 -- predictions table
 CREATE TABLE results.predictions (
-  model_id      INT REFERENCES results.models (model_id),
-  city          TEXT,
-  year_test     INT,
-  cell_id       INT,
-  score         REAL,
-  label         BOOL
+  model_id       INT REFERENCES results.models (model_id),
+  city           TEXT,
+  year_features  INT,
+  label_range    INT[],
+  cell_id        INT,
+  score          REAL,
+  label          BOOL
 );
 
 -- feature importance table
@@ -37,10 +39,11 @@ CREATE TABLE results.feature_importances (
 );
 
 CREATE TABLE results.evaluations (
-  model_id   INT REFERENCES results.models (model_id),
-  city       TEXT,
-  year_test  INT,
-  metric     TEXT,
-  cutoff     TEXT,
-  value      REAL
+  model_id            INT REFERENCES results.models (model_id),
+  city                TEXT,
+  years               INT[],
+  type_validation     TEXT,
+  metric              TEXT,
+  cutoff              TEXT,
+  value               REAL
 );

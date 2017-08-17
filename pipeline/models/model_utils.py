@@ -8,7 +8,7 @@ from sklearn import (svm, ensemble, tree,
 import utils
 
 def get_data(db_engine,
-             year,
+             years,
              city,
              features,
              grid_size,
@@ -33,13 +33,13 @@ def get_data(db_engine,
                 FROM  features.{features_table_name}
                 LEFT OUTER JOIN features.{labels_table_name}
                 USING (cell_id, year_model)
-                 WHERE year_model = '{year}'"""
+                 WHERE year_model IN ({years})"""
                 .format(features=", ".join(features),
                         features_table_name=features_table_name,
                         labels_table_name=labels_table_name,
                         size=grid_size,
                         city=city,
-                        year=year))
+                        years=",".join([str(x) for x in years])))
 
     data = pd.read_sql(query, db_engine)
     data.set_index('cell_id', inplace=True)
@@ -80,11 +80,12 @@ def store_train(timestamp,
                 city,
                 parameters,
                 features,
-                year_train,
+                years_train,
                 grid_size,
                 built_threshold,
                 population_threshold,
                 cluster_threshold,
+                label_range,
                 model_comment):
     """
     Function that stores all train information
@@ -95,32 +96,35 @@ def store_train(timestamp,
                                              model_type,
                                              model_parameters,
                                              features,
-                                             year_train,
+                                             years_train,
                                              grid_size,
                                              built_threshold,
                                              population_threshold,
                                              cluster_threshold,
+                                             label_range,
                                              model_comment)
                 VALUES ('{run_time}'::TIMESTAMP,
                         '{city}',
                         '{model_type}',
                         '{model_parameters}',
                          ARRAY{features},
-                         '{year_train}',
+                         ARRAY{years_train},
                          '{grid_size}',
                          {built_threshold},
                          {population_threshold},
                          {cluster_threshold},
+                         ARRAY{label_range},
                          '{model_comment}') """.format(run_time=timestamp,
                                                        city=city,
                                                       model_type=model,
                                                       model_parameters=json.dumps(dict(parameters)),
                                                       features=list(features),
-                                                      year_train=year_train,
+                                                      years_train=years_train,
                                                       grid_size=grid_size,
                                                       built_threshold=built_threshold,
                                                       population_threshold=population_threshold,
                                                       cluster_threshold=cluster_threshold,
+                                                      label_range=label_range,
                                                       model_comment=model_comment))
     return query
 
@@ -170,7 +174,8 @@ def store_importances(db_engine, model_id, city, features, importances):
 def store_predictions(db_engine,
                       model_id,
                       city,
-                      year_test,
+                      year_features,
+                      label_range,
                       cell_id,
                       scores,
                       test_y):
@@ -181,7 +186,8 @@ def store_predictions(db_engine,
     # Create pandas db of features importance
     dataframe_for_insert = pd.DataFrame( {"model_id": model_id,
                                           "city": city,
-                                          "year_test": year_test,
+                                          "year_features": year_features,
+                                          "label_range": label_range,
                                           "cell_id": cell_id,
                                           "score": scores,
                                           "label": test_y})
@@ -196,7 +202,7 @@ def store_predictions(db_engine,
     return True
 
 
-def store_evaluations(engine, model_id, city, year_test, metrics):
+def store_evaluations(engine, model_id, city, years, type_validation, metrics):
     """
     Functions that stores the evauation metric for the year test
     on results.evaluations
@@ -219,14 +225,16 @@ def store_evaluations(engine, model_id, city, year_test, metrics):
             metric_cutoff = 'Null'
         query = ("""INSERT INTO results.evaluations(model_id,
                                                     city,
-                                                    year_test,
+                                                    years_test,
+                                                    type_validation,
                                                     metric,
                                                     cutoff,
                                                     value)
-                   VALUES( {0}, '{1}', {2}, '{3}', {4}, {5}) """
+                   VALUES( {0}, '{1}', ARRAY{2}, '{3}',  '{4}', {5}, {6}) """
                    .format( model_id,
                             city,
                             year_test,
+                            type_validation,
                             metric,
                             metric_cutoff,
                             evaluation ))

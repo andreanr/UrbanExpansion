@@ -1,5 +1,6 @@
 import luigi
 import pdb
+import json
 from luigi import configuration
 from luigi.contrib import postgres
 
@@ -27,9 +28,9 @@ class CityGeneralTask(PostgresTask):
 
 
 class FeaturesTask(CityGeneralTask):
-    year_train = configuration.get_config().get('general', 'year_train')
-    year_test = configuration.get_config().get('general', 'year_test')
+    years_train = json.loads(configuration.get_config().get('general', 'year_train'))
     year_predict = configuration.get_config().get('general', 'year_predict')
+    label_range = json.loads(configuration.get_config().get('general', 'label_range'))
     features_table_prefix = configuration.get_config().get('general','features_table_prefix')
     labels_table_prefix = configuration.get_config().get('general','labels_table_prefix')
     model_comment = configuration.get_config().get('general','model_comment')
