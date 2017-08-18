@@ -21,6 +21,18 @@ class FeatureGenerator(city_task.FeaturesTask):
         return GenerateUrbanGridsFeatures()
 
     @property
+    def update_id(self):
+        return ("""FeatureGenerator__{prefix}_{city}:{size}_{built}:{pop}:{cluster}:{dense_built}:{dense_pop}:{dense_cluster}"""
+                .format(prefix=self.features_table_prefix,
+                        city=self.city,
+                        size=self.grid_size,
+                        built=self.urban_built_threshold,
+                        pop=self.urban_population_threshold,
+                        cluster=self.urban_cluster_threshold,
+                        dense_built=self.dense_built_threshold,
+                        dense_pop=self.dense_population_threshold,
+                        dense_cluster=self.dense_cluster_threshold))
+    @property
     def table(self):
         return "features.{city}_{prefix}_{size}".format(city=self.city,
                                                         prefix=self.features_table_prefix,
@@ -48,6 +60,15 @@ class LabelGenerator(city_task.FeaturesTask):
     def requires(self):
         return GenerateUrbanGridsFeatures()
 
+    @property
+    def update_id(self):
+        return ("""LabelGenerator__{prefix}_{city}:{size}_{built}:{pop}:{cluster}"""
+                 .format(prefix=self.labels_table_prefix,
+                         city=self.city,
+                         size=self.grid_size,
+                         built=self.urban_built_threshold,
+                         pop=self.urban_population_threshold,
+                         cluster=self.urban_cluster_threshold))
     @property
     def table(self):
         return "features.{city}_{prefix}_{size}".format(city=self.city,
