@@ -5,6 +5,7 @@ import subprocess
 from luigi import configuration
 from luigi.contrib import postgres
 from dotenv import load_dotenv,find_dotenv
+from commons import city_task
 
 load_dotenv(find_dotenv())
 
@@ -79,12 +80,37 @@ class CreateSchemas(luigi.WrapperTask):
 #   DATA INGEST
 ##################
 
+class DownloadBufferTask(city_task.CityGeneralTask):
+
+    file_type = '.json'
+    buffer_dist = luigi.Parameter()
+
+    def requires(self):
+        return CreateSchemas()
+
+    def run(self):
+        if not os.path.exists(self.local_path + '/' + self.data_task):
+            os.makedirs(self.local_path + '/' + self.data_task)
+        command_list = ['python', self.download_scripts + "shp_buffer.py",
+                        '--city', self.city,
+                        '--buffer', self.buffer_dist,
+                        '--local_path', self.local_path,
+                        '--data_task', self.data_task]
+        cmd = " ".join(command_list)
+        print(cmd)
+        return subprocess.call([cmd], shell=True)
+
 
 class LocalDownloadTask(luigi.Task):
     city = luigi.Parameter()
     data_task = luigi.Parameter()
     download_scripts = luigi.Parameter()
     local_path = luigi.Parameter()
+
+    buffer_dist = configuration.get_config().get('general','buffer_dist')
+
+    def requires(self):
+        return DownloadBufferTask(self.buffer_dist)
 
     def output(self):
         try:
@@ -223,23 +249,6 @@ class water_bodies(LocalDownloadTask):
                         self.local_path,
                         local_file]
         cmd = " ".join(command_list)
-        return subprocess.call([cmd], shell=True)
-
-
-class shp_buffer(LocalDownloadTask):
-    file_type = '.json'
-    buffer_dist = luigi.Parameter()
-
-    def run(self):
-        if not os.path.exists(self.local_path + '/' + self.data_task):
-            os.makedirs(self.local_path + '/' + self.data_task)
-        command_list = ['python', self.download_scripts + "shp_buffer.py",
-                        '--city', self.city,
-                        '--buffer', self.buffer_dist,
-                        '--local_path', self.local_path,
-                        '--data_task', self.data_task]
-        cmd = " ".join(command_list)
-        print(cmd)
         return subprocess.call([cmd], shell=True)
 
 

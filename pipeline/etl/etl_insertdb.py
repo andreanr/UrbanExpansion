@@ -6,17 +6,26 @@ from luigi import configuration
 from luigi.contrib import postgres
 from dotenv import load_dotenv,find_dotenv
 from commons import city_task
+from etl import etl_downloads
+from etl import etl_insertdb
 
 load_dotenv(find_dotenv())
 
-class InsertDBTasks(luigi.WrapperTask):
-   city = configuration.get_config().get('general','city')
-   insert_tasks = configuration.get_config().get('data','uploads')
-   insert_tasks = [x.strip() for x in list(upload_tasks.split(','))] 
-   local_path = configuration.get_config().get('general','local_path')
-   insert_scripts = configuration.get_config().get('general', 'insert_scripts')
 
-   def requires(self):
+class GeneralIngest(city_task.CityGeneralTask):
+
+    def requires(self):
+        return InsertDBTasks(self.city)
+
+
+class InsertDBTasks(luigi.WrapperTask):
+    city = luigi.Parameter()
+    insert_tasks = configuration.get_config().get('data','uploads')
+    insert_tasks = [x.strip() for x in list(upload_tasks.split(','))] 
+    local_path = configuration.get_config().get('general','local_path')
+    insert_scripts = configuration.get_config().get('general', 'insert_scripts')
+
+    def requires(self):
         tasks = []
         for task_name in self.insert_tasks:
             try:
@@ -39,12 +48,18 @@ class InsertDBTasks(luigi.WrapperTask):
         yield tasks
 
 
-class built_lds(city_task.PostgresTask):
-    
+class InsertDBTask(city_task.PostgresTask):
+
     city = luigi.Parameter()
-    year = luigi.Parameter()
     local_path = luigi.Parameter()
     insert_scripts = luigi.Parameter()
+
+    def requires(self):
+        return DownloadTasks()
+
+
+class built_lds(InsertDBTask):
+    year = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -70,12 +85,9 @@ class built_lds(city_task.PostgresTask):
         return query_str
 
 
-class city_lights(city_task.PostgresTask):
+class city_lights(InsertDBTask):
     
-    city = luigi.Parameter()
     year = luigi.Parameter()
-    local_path = luigi.Parameter()
-    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -100,12 +112,9 @@ class city_lights(city_task.PostgresTask):
         return query_str
 
 
-class population(city_task.PostgresTask):
+class population(InsertDBTask):
     
-    city = luigi.Parameter()
     year = luigi.Parameter()
-    local_path = luigi.Parameter()
-    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -130,12 +139,9 @@ class population(city_task.PostgresTask):
         return query_str
 
 
-class settlements(city_task.PostgresTask):
+class settlements(InsertDBTask):
     
-    city = luigi.Parameter()
     year = luigi.Parameter()
-    local_path = luigi.Parameter()
-    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -160,11 +166,7 @@ class settlements(city_task.PostgresTask):
         return query_str
 
 
-class dem(city_task.PostgresTask):
-    
-    city = luigi.Parameter()
-    local_path = luigi.Parameter()
-    insert_scripts = luigi.Parameter()
+class dem(InsertDBTask):
     
     @property
     def update_id(self):
@@ -187,11 +189,7 @@ class dem(city_task.PostgresTask):
         return query_str
 
 
-class water_bodies(city_task.PostgresTask):
-    
-    city = luigi.Parameter()
-    local_path = luigi.Parameter()
-    insert_scripts = luigi.Parameter()
+class water_bodies(InsertDBTask):
     
     @property
     def update_id(self):
@@ -215,11 +213,7 @@ class water_bodies(city_task.PostgresTask):
         return query_str
 
 
-class highways(city_task.PostgresTask):
-    
-    city = luigi.Parameter()
-    local_path = luigi.Parameter()
-    insert_scripts = luigi.Parameter()
+class highways(InsertDBTask):
     
     @property
     def update_id(self):
@@ -243,11 +237,7 @@ class highways(city_task.PostgresTask):
         return query_str
 
 
-class geopins(city_task.PostgresTask):
-    
-    city = luigi.Parameter()
-    local_path = luigi.Parameter()
-    insert_scripts = luigi.Parameter()
+class geopins(InsertDBTask):
     
     @property
     def update_id(self):
