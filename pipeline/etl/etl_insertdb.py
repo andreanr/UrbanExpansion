@@ -9,32 +9,42 @@ from commons import city_task
 
 load_dotenv(find_dotenv())
 
-#class InsertDBTasks(luigi.WrapperTask):
-#    city = configuration.get_config().get('general','city')
-#    insert_tasks = configuration.get_config().get('data','uploads')
-#    insert_tasks = [x.strip() for x in list(upload_tasks.split(','))] 
-#    local_path = configuration.get_config().get('general','local_path')
-#    insert_scripts = configuration.get_config().get('general', 'insert_scripts')
-#
-#    def requires(self):
-#        tasks = []
-#        for task_name in self.insert_tasks:
-#            try:
-#                years = configuration.get_config().get(task_name, 'years')
-#                years = [x.strip() for x in list(years.split(','))]
-#            except:
-#                years = []
-#            if len(years) > 0:
-#                for year in years:
-#                    tasks.append(
+class InsertDBTasks(luigi.WrapperTask):
+   city = configuration.get_config().get('general','city')
+   insert_tasks = configuration.get_config().get('data','uploads')
+   insert_tasks = [x.strip() for x in list(upload_tasks.split(','))] 
+   local_path = configuration.get_config().get('general','local_path')
+   insert_scripts = configuration.get_config().get('general', 'insert_scripts')
+
+   def requires(self):
+        tasks = []
+        for task_name in self.insert_tasks:
+            try:
+                years = configuration.get_config().get(task_name, 'years')
+                years = [x.strip() for x in list(years.split(','))]
+            except:
+                years = []
+            if len(years) > 0:
+                for year in years:
+                    run_task = eval(task_name)
+                    tasks.append(run_task(self.city,
+                                          year,
+                                          self.local_path,
+                                          self.insert_scripts))
+            else:
+                run_task = eval(task_name)
+                tasks.append(run_task(self.city,
+                                      self.local_path,
+                                      self.insert_scripts))
+        yield tasks
 
 
 class built_lds(city_task.PostgresTask):
     
-    city = 'irbid' # luigi.Parameter()
-    year = '2014' #luigi.Parameter()
-    local_path = '/home/data' # luigi.Parameter()
-    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    city = luigi.Parameter()
+    year = luigi.Parameter()
+    local_path = luigi.Parameter()
+    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -62,10 +72,10 @@ class built_lds(city_task.PostgresTask):
 
 class city_lights(city_task.PostgresTask):
     
-    city = 'irbid' # luigi.Parameter()
-    year = '2013' #luigi.Parameter()
-    local_path = '/home/data' # luigi.Parameter()
-    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    city = luigi.Parameter()
+    year = luigi.Parameter()
+    local_path = luigi.Parameter()
+    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -92,10 +102,10 @@ class city_lights(city_task.PostgresTask):
 
 class population(city_task.PostgresTask):
     
-    city = 'irbid' # luigi.Parameter()
-    year = '2015' #luigi.Parameter()
-    local_path = '/home/data' # luigi.Parameter()
-    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    city = luigi.Parameter()
+    year = luigi.Parameter()
+    local_path = luigi.Parameter()
+    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -122,10 +132,10 @@ class population(city_task.PostgresTask):
 
 class settlements(city_task.PostgresTask):
     
-    city = 'irbid' # luigi.Parameter()
-    year = '2015' #luigi.Parameter()
-    local_path = '/home/data' # luigi.Parameter()
-    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    city = luigi.Parameter()
+    year = luigi.Parameter()
+    local_path = luigi.Parameter()
+    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -152,9 +162,9 @@ class settlements(city_task.PostgresTask):
 
 class dem(city_task.PostgresTask):
     
-    city = 'irbid' # luigi.Parameter()
-    local_path = '/home/data' # luigi.Parameter()
-    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    city = luigi.Parameter()
+    local_path = luigi.Parameter()
+    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -179,9 +189,9 @@ class dem(city_task.PostgresTask):
 
 class water_bodies(city_task.PostgresTask):
     
-    city = 'irbid' # luigi.Parameter()
-    local_path = '/home/data' # luigi.Parameter()
-    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    city = luigi.Parameter()
+    local_path = luigi.Parameter()
+    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -207,9 +217,9 @@ class water_bodies(city_task.PostgresTask):
 
 class highways(city_task.PostgresTask):
     
-    city = 'irbid' # luigi.Parameter()
-    local_path = '/home/data' # luigi.Parameter()
-    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    city = luigi.Parameter()
+    local_path = luigi.Parameter()
+    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
@@ -235,9 +245,9 @@ class highways(city_task.PostgresTask):
 
 class geopins(city_task.PostgresTask):
     
-    city = 'irbid' # luigi.Parameter()
-    local_path = '/home/data' # luigi.Parameter()
-    insert_scripts = 'etl/insert_db/' # luigi.Parameter()
+    city = luigi.Parameter()
+    local_path = luigi.Parameter()
+    insert_scripts = luigi.Parameter()
     
     @property
     def update_id(self):
