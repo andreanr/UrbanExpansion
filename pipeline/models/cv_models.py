@@ -1,16 +1,17 @@
 import luigi
 import datetime
 import pdb
+
 from itertools import product
 from luigi.contrib import postgres
 from luigi import configuration
 from sklearn.model_selection import KFold
+from dotenv import find_dotenv, load_dotenv
 
 from models.features_tasks import FeatureGenerator, LabelGenerator
 from models import model_utils
 from models import scoring
 from commons import city_task
-from dotenv import find_dotenv, load_dotenv
 
 import utils
 
@@ -25,6 +26,21 @@ class CVModel(city_task.FeaturesTask):
     table = 'results.models'
     n_folds = int(configuration.get_config().get('general','n_folds'))
 
+    @property
+    def update_id(self):
+        hash_parameters = model_utils.generate_uuid(self.parameters)
+        hash_features = model_utils.generate_uuid(self.features)
+        return ("""CVModel__{city}:{size}_{model}:{params}:{feat}:{years}:{folds}:{built}:{pop}:{cluster}"""
+                    .format(city=self.city,
+                            size=self.grid_size,
+                            model=self.model,
+                            params=hash_parameters,
+                            feat=features,
+                            years="-".join([x for x in self.years]),
+                            folds=self.n_folds,
+                            built=self.urban_built_threshold,
+                            pop=self.urban_population_threshold,
+                            cluster=self.urban_cluster_threshold))
     @property
     def query(self):
         """
@@ -61,24 +77,6 @@ class CVModel(city_task.FeaturesTask):
                                     self.labels_table_prefix)
 
         parameters = dict(self.parameters)
-        kf = KFold(n_splits=self.n_folds)
-        kf.get_n_splits(X)
-        folds_metrics = dict()
-        folds = 1
-        for train_index, test_index in kf.split(X):
-            X_train, X_test = X[train_index], X[test_index]
-            y_train, y_test = y[train_index], y[test_index]
-            # Train
-            print('train model for fold {0}'.format(folds))
-            modelobj = model_utils.define_model(self.model, parameters)
-            modelobj.fit(X_train, y_train)
-            # Test
-            print('test model for fold {0}'.format(folds))
-            scores = model_utils.predict_model(modelobj, X_test)
-            # Scoring
-            folds_metrics[folds] = scoring.calculate_all_evaluation_metrics(y_test, scores)
-            folds += 1
-
         # Train with all data
         modelobj = model_utils.define_model(self.model, parameters)
         print('fit model')
@@ -89,6 +87,25 @@ class CVModel(city_task.FeaturesTask):
         sql = self.query
         cursor.execute(sql)
         connection.commit()
+
+        # kfolds 
+        kf = KFold(n_splits=self.n_folds)
+        kf.get_n_splits(X)
+        folds_metrics = dict()
+        folds = 1
+        for train_index, test_index in kf.split(X):
+            X_train, X_test = X[train_index], X[test_index]
+            y_train, y_test = y[train_index], y[test_index]
+            # Train
+            print('train model for fold {0}'.format(folds))
+            modelobj_f = model_utils.define_model(self.model, parameters)
+            modelobj_f.fit(X_train, y_train)
+            # Test
+            print('test model for fold {0}'.format(folds))
+            scores = model_utils.predict_model(modelobj_f, X_test)
+            # Scoring
+            folds_metrics[folds] = scoring.calculate_all_evaluation_metrics(y_test, scores)
+            folds += 1
 
         # get model_id
         model_id = model_utils.get_model_id(engine, self.model, self.city, parameters, self.timestamp)

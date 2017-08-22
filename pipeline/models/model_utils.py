@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 import pdb
+import hashlib
 import numpy as np
 from sklearn import (svm, ensemble, tree,
                      linear_model, neighbors, naive_bayes)
@@ -316,3 +317,26 @@ def define_model(model, parameters, n_cores=1):
 
     else:
         raise ConfigError("Unsupported model {}".format(model))
+
+def generate_uuid(parameters):
+    """ Generate a unique identifier given a dictionary or list
+    :param metadata: metadata for the matrix
+    :returns: unique name for the file
+    """
+    def dt_handler(x):
+        if isinstance(x, datetime.datetime) or isinstance(x, datetime.date):
+            return x.isoformat()
+        raise TypeError("Unknown type")
+
+    if isinstance(parameters, list):
+        return hashlib.md5(
+                    json.dumps(sorted(parameters), default=dt_handler, sort_keys=True)
+                     .encode('utf-8')
+                 ).hexdigest()
+
+    elif isinstance(parameters, dict):
+         return hashlib.md5(
+                    json.dumps(parameters, default=dt_handler, sort_keys=True)
+                    .encode('utf-8')
+                ).hexdigest()
+
