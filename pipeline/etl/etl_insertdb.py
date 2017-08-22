@@ -21,7 +21,7 @@ class GeneralIngest(city_task.CityGeneralTask):
 class InsertDBTasks(luigi.WrapperTask):
     city = luigi.Parameter()
     insert_tasks = configuration.get_config().get('data','uploads')
-    insert_tasks = [x.strip() for x in list(upload_tasks.split(','))] 
+    insert_tasks = [x.strip() for x in list(insert_tasks.split(','))] 
     local_path = configuration.get_config().get('general','local_path')
     insert_scripts = configuration.get_config().get('general', 'insert_scripts')
 
