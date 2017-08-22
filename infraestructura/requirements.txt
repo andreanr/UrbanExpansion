@@ -13,9 +13,6 @@ docopt==0.6.2
 docutils==0.13.1
 filechunkio==1.8
 Fiona==1.7.8
-GDAL==2.1.0
-geopandas==0.2.1
-geopandas-osm==0.0.1
 hdfs==2.0.16
 ibis-framework==0.9.0
 impyla==0.14.0
