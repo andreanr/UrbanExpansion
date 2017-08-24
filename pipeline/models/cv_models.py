@@ -28,7 +28,7 @@ class CVModel(city_task.FeaturesTask):
 
     @property
     def update_id(self):
-        hash_parameters = model_utils.generate_uuid(self.parameters)
+        hash_parameters = model_utils.generate_uuid(dict(self.parameters))
         hash_features = model_utils.generate_uuid(self.features)
         return ("""CVModel__{city}:{size}_{model}:{params}:{feat}:{years}:{folds}:{built}:{pop}:{cluster}"""
                     .format(city=self.city,
@@ -168,4 +168,4 @@ class RunCVModels(luigi.WrapperTask):
             for each_param in all_params:
                 param_i = {name: value for name, value in zip(parameter_names, each_param)}
                 tasks.append(CVModel(model, param_i, self.features))
-        yield tasks
+        return tasks
