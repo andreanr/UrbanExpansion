@@ -1,0 +1,21 @@
+version: "2"
+
+services:
+  luigi-server:
+    image: luigi-server
+    ports:
+      - "8083:8082"
+    networks:
+      - expansion_net
+
+  luigi-worker:
+    image: expansion:0.1
+    networks:
+      - expansion_net
+    volumes:
+      - /home:/home
+
+networks:
+   expansion_net:
+     external: true
+
