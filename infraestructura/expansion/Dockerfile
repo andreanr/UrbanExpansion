@@ -58,6 +58,18 @@ RUN git clone https://github.com/geopandas/geopandas.git \
     && cd ~/.. \
     && rm -rf geopandas/
 
+RUN apt-get install -y -qq wget \
+    && wget -O /usr/local/bin/rsub https://raw.github.com/aurora/rmate/master/rmate \
+    && chmod a+x /usr/local/bin/rsub \
+    && apt-get install -y -qq screen
+
+RUN echo "luigi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+COPY ../../../UrbanExpansion/ ./UrbanExpansion/
+#RUN chmod +x run.sh
+
 EXPOSE 52698
 
-CMD [ "/bin/bash" ]
+#CMD ["run.sh"]
+CMD [ "/bin/sh", "-c", "while true; do echo hello world; sleep 1; done"]
+
