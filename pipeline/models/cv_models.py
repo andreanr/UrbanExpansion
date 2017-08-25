@@ -66,7 +66,12 @@ class CVModel(city_task.FeaturesTask):
         connection = engine.raw_connection()
         cursor = connection.cursor()
 
-        # commit and close connection
+        sql = self.query
+        cursor.execute(sql)
+        connection.commit()
+        self.output().touch(connection)
+        connection.commit()
+
         print('Get data')
         X, y, X_indexes = model_utils.get_data(engine,
                                     self.years_train,
@@ -84,9 +89,6 @@ class CVModel(city_task.FeaturesTask):
 
         print('get feature importances')
         importances = model_utils.get_feature_importances(modelobj)
-        sql = self.query
-        cursor.execute(sql)
-        connection.commit()
 
         # kfolds 
         kf = KFold(n_splits=self.n_folds)
@@ -138,7 +140,6 @@ class CVModel(city_task.FeaturesTask):
                                           scores,
                                           predict_y)
         # Update marker table
-        self.output().touch(connection)
         connection.commit()
         connection.close()
 
