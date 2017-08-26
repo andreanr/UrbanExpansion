@@ -52,6 +52,10 @@ class CreateSchema(postgres.PostgresQuery):
     # schema to query parameter
     query = luigi.Parameter()
     table = ''
+    
+    @property
+    def update_id(self):
+        return self.database + "__" + self.host + ':' + self.query
 
     def run(self):
         connection = self.output().connect()
@@ -87,10 +91,14 @@ class DownloadBufferTask(luigi.Task):
     data_task = luigi.Parameter()
     download_scripts = luigi.Parameter()
     local_path = luigi.Parameter()
-    buffer_dist = luigi.Parameter()
+    buffer_dist = configuration.get_config().get('general','buffer_dist')
 
     def requires(self):
         return CreateSchemas()
+
+    def output(self):
+        return luigi.LocalTarget(self.local_path + '/shp_buffer/' +
+                                 self.city + '_shp_buffer.json')
 
     def run(self):
         if not os.path.exists(self.local_path + '/' + self.data_task):
@@ -111,8 +119,6 @@ class LocalDownloadTask(luigi.Task):
     data_task = luigi.Parameter()
     download_scripts = luigi.Parameter()
     local_path = luigi.Parameter()
-
-    buffer_dist = configuration.get_config().get('general','buffer_dist')
 
     def output(self):
         try:
@@ -235,14 +241,7 @@ class city_lights(LocalDownloadTask):
 
 
 class water_bodies(LocalDownloadTask):
-    file_type = '.zip'
-
-    def requires(self):
-        return DownloadBufferTask(self.city,
-                                  self.data_task,
-                                  self.download_scripts,
-                                  self.local_path,
-                                  self.buffer_dist)
+    file_type = '.shp'
 
     def run(self):
         try:
@@ -253,6 +252,7 @@ class water_bodies(LocalDownloadTask):
 
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
+        
         command_list = ['sh', self.download_scripts + "water_bodies.sh",
                         self.city,
                         self.local_path,
@@ -266,10 +266,9 @@ class dem(LocalDownloadTask):
 
     def requires(self):
         return DownloadBufferTask(self.city,
-                                  self.data_task,
+                                  'shp_buffer',
                                   self.download_scripts,
-                                  self.local_path,
-                                  self.buffer_dist)
+                                  self.local_path)
     
     def run(self):
         try:
@@ -295,10 +294,9 @@ class highways(LocalDownloadTask):
     
     def requires(self):
         return DownloadBufferTask(self.city,
-                                  self.data_task,
+                                  'shp_buffer',
                                   self.download_scripts,
-                                  self.local_path,
-                                  self.buffer_dist)
+                                  self.local_path)
 
     def run(self):
         try:
@@ -324,10 +322,9 @@ class geopins(LocalDownloadTask):
     
     def requires(self):
         return DownloadBufferTask(self.city,
-                                  self.data_task,
+                                  'shp_buffer',
                                   self.download_scripts,
-                                  self.local_path,
-                                  self.buffer_dist)
+                                  self.local_path)
 
     def run(self):
         try:

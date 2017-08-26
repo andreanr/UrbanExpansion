@@ -6,7 +6,7 @@ from luigi import configuration
 from luigi.contrib import postgres
 from dotenv import load_dotenv,find_dotenv
 from commons import city_task
-from etl.etl_insertdb import GeneralIngest
+from etl.etl_insertdb import InsertDBTasks
 
 load_dotenv(find_dotenv())
 
@@ -15,7 +15,7 @@ class slope(city_task.PostgresTask):
     esri = luigi.Parameter()
 
     def requires(self):
-        return GeneralIngest()
+        return InsertDBTasks()
 
     @property
     def update_id(self):
@@ -41,7 +41,7 @@ class city_center(city_task.PostgresTask):
     city = luigi.Parameter()
 
     def requires(self):
-        return GeneralIngest()
+        return InsertDBTasks()
 
     @property
     def update_id(self):

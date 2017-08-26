@@ -31,9 +31,9 @@ class InsertDBTasks(luigi.WrapperTask):
                 for year in years:
                     run_task = eval(task_name)
                     tasks.append(run_task(self.city,
-                                          year,
                                           self.local_path,
-                                          self.insert_scripts))
+                                          self.insert_scripts,
+                                          year))
             else:
                 run_task = eval(task_name)
                 tasks.append(run_task(self.city,
@@ -70,7 +70,7 @@ class built_lds(InsertDBTask):
                         self.year,
                         self.local_path]
         cmd = " ".join(command_list)
-        pdb.set_trace()
+        
         subprocess.call([cmd], shell=True)
         with open(self.local_path + '/built_lds/' + self.year + '/built_lds_' +
                   self.city + '.sql', 'r') as myfile:
