@@ -12,14 +12,8 @@ from etl import etl_insertdb
 load_dotenv(find_dotenv())
 
 
-class GeneralIngest(city_task.CityGeneralTask):
-
-    def requires(self):
-        return InsertDBTasks(self.city)
-
-
 class InsertDBTasks(luigi.WrapperTask):
-    city = luigi.Parameter()
+    city = configuration.get_config().get('general','city')
     insert_tasks = configuration.get_config().get('data','uploads')
     insert_tasks = [x.strip() for x in list(insert_tasks.split(','))] 
     local_path = configuration.get_config().get('general','local_path')
@@ -55,7 +49,7 @@ class InsertDBTask(city_task.PostgresTask):
     insert_scripts = luigi.Parameter()
 
     def requires(self):
-        return DownloadTasks()
+        return etl_downloads.DownloadTasks()
 
 
 class built_lds(InsertDBTask):

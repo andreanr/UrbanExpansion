@@ -80,9 +80,13 @@ class CreateSchemas(luigi.WrapperTask):
 #   DATA INGEST
 ##################
 
-class DownloadBufferTask(city_task.CityGeneralTask):
+class DownloadBufferTask(luigi.Task):
 
     file_type = '.json'
+    city = luigi.Parameter()
+    data_task = luigi.Parameter()
+    download_scripts = luigi.Parameter()
+    local_path = luigi.Parameter()
     buffer_dist = luigi.Parameter()
 
     def requires(self):
@@ -91,6 +95,7 @@ class DownloadBufferTask(city_task.CityGeneralTask):
     def run(self):
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
+        
         command_list = ['python', self.download_scripts + "shp_buffer.py",
                         '--city', self.city,
                         '--buffer', self.buffer_dist,
@@ -108,9 +113,6 @@ class LocalDownloadTask(luigi.Task):
     local_path = luigi.Parameter()
 
     buffer_dist = configuration.get_config().get('general','buffer_dist')
-
-    def requires(self):
-        return DownloadBufferTask(self.buffer_dist)
 
     def output(self):
         try:
@@ -235,6 +237,13 @@ class city_lights(LocalDownloadTask):
 class water_bodies(LocalDownloadTask):
     file_type = '.zip'
 
+    def requires(self):
+        return DownloadBufferTask(self.city,
+                                  self.data_task,
+                                  self.download_scripts,
+                                  self.local_path,
+                                  self.buffer_dist)
+
     def run(self):
         try:
            global_param = configuration.get_config().get(self.data_task, 'global')
@@ -254,12 +263,13 @@ class water_bodies(LocalDownloadTask):
 
 class dem(LocalDownloadTask):
     file_type = '.tif'
-    
+
     def requires(self):
-        return shp_buffer(self.city, 
-                          'shp_buffer',
-                          self.download_scripts,
-                          self.local_path)
+        return DownloadBufferTask(self.city,
+                                  self.data_task,
+                                  self.download_scripts,
+                                  self.local_path,
+                                  self.buffer_dist)
     
     def run(self):
         try:
@@ -282,6 +292,13 @@ class dem(LocalDownloadTask):
 class highways(LocalDownloadTask):
     file_type = '.shp'
     timeout = luigi.Parameter()
+    
+    def requires(self):
+        return DownloadBufferTask(self.city,
+                                  self.data_task,
+                                  self.download_scripts,
+                                  self.local_path,
+                                  self.buffer_dist)
 
     def run(self):
         try:
@@ -304,6 +321,13 @@ class highways(LocalDownloadTask):
 class geopins(LocalDownloadTask):
     file_type = '.shp'
     timeout = luigi.Parameter()
+    
+    def requires(self):
+        return DownloadBufferTask(self.city,
+                                  self.data_task,
+                                  self.download_scripts,
+                                  self.local_path,
+                                  self.buffer_dist)
 
     def run(self):
         try:
