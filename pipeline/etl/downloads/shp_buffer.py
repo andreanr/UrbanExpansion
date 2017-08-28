@@ -79,17 +79,11 @@ if __name__ == "__main__":
     labs = ['bbox_west', 'bbox_south', 'bbox_east', 'bbox_north']
     vals = city.total_bounds
     bbox = dict(zip(labs,vals))
-    pdb.set_trace()
     path = local_path + '/' + data_task + '/' + city_name + '_' + data_task + ".json"
     with open(path, 'w') as fp:
         json.dump(bbox, fp)
     fn = city_name + ".shp"
     save_shapefile(city, folder=local_path + '/' + data_task, filename=fn)
-    pdb.set_trace()
-    city_boundary = city.ix[0].geometry
-    # project_to_crs(filename=fn, folder="shp", s_crs=from_crs, t_crs=to_crs, c_name=country_name)
-    path = local_path + '/' + data_task + '/' + fn
-    pdb.set_trace()
     shp_to_pg(path, city_name)
 
 
