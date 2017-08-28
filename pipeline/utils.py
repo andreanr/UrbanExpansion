@@ -3,6 +3,8 @@ from sqlalchemy.pool import NullPool
 from dotenv import load_dotenv, find_dotenv
 from luigi import configuration
 import os
+import json
+import pdb
 import yaml
 
 # Variables de ambiente
@@ -79,9 +81,10 @@ def get_features_years(feature_grid):
 
 
 def get_years_models():
-    return [configuration.get_config().get('general', 'year_train'),
-            configuration.get_config().get('general', 'year_test'),
-            configuration.get_config().get('general', 'year_predict')]
+    years_train =  json.loads(configuration.get_config().get('general', 'years_train'))
+    years_predict = [configuration.get_config().get('general', 'year_predict')]
+    years =  years_train + years_predict
+    return [str(x) for x in years]
 
 
 def read_shapefile(filename='default.shp'):
