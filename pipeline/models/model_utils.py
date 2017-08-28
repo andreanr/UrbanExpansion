@@ -328,9 +328,9 @@ def generate_uuid(parameters):
             return x.isoformat()
         raise TypeError("Unknown type")
 
-    if isinstance(parameters, list):
+    if isinstance(parameters, tuple):
         return hashlib.md5(
-                    json.dumps(sorted(parameters), default=dt_handler, sort_keys=True)
+                    json.dumps(sorted(list(parameters)), default=dt_handler, sort_keys=True)
                      .encode('utf-8')
                  ).hexdigest()
 

@@ -28,7 +28,7 @@ class CVModel(city_task.FeaturesTask):
 
     @property
     def update_id(self):
-        hash_parameters = model_utils.generate_uuid(self.parameters)
+        hash_parameters = model_utils.generate_uuid(dict(self.parameters))
         hash_features = model_utils.generate_uuid(self.features)
         return ("""CVModel__{city}:{size}_{model}:{params}:{feat}:{years}:{folds}:{built}:{pop}:{cluster}"""
                     .format(city=self.city,
@@ -66,7 +66,12 @@ class CVModel(city_task.FeaturesTask):
         connection = engine.raw_connection()
         cursor = connection.cursor()
 
-        # commit and close connection
+        sql = self.query
+        cursor.execute(sql)
+        connection.commit()
+        self.output().touch(connection)
+        connection.commit()
+
         print('Get data')
         X, y, X_indexes = model_utils.get_data(engine,
                                     self.years_train,
@@ -84,9 +89,6 @@ class CVModel(city_task.FeaturesTask):
 
         print('get feature importances')
         importances = model_utils.get_feature_importances(modelobj)
-        sql = self.query
-        cursor.execute(sql)
-        connection.commit()
 
         # kfolds 
         kf = KFold(n_splits=self.n_folds)
@@ -138,7 +140,6 @@ class CVModel(city_task.FeaturesTask):
                                           scores,
                                           predict_y)
         # Update marker table
-        self.output().touch(connection)
         connection.commit()
         connection.close()
 
@@ -168,4 +169,4 @@ class RunCVModels(luigi.WrapperTask):
             for each_param in all_params:
                 param_i = {name: value for name, value in zip(parameter_names, each_param)}
                 tasks.append(CVModel(model, param_i, self.features))
-        yield tasks
+        return tasks

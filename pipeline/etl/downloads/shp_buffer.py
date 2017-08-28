@@ -84,9 +84,6 @@ if __name__ == "__main__":
         json.dump(bbox, fp)
     fn = city_name + ".shp"
     save_shapefile(city, folder=local_path + '/' + data_task, filename=fn)
-    city_boundary = city.ix[0].geometry
-    # project_to_crs(filename=fn, folder="shp", s_crs=from_crs, t_crs=to_crs, c_name=country_name)
-    path = local_path + '/' + data_task + '/' + fn
     shp_to_pg(path, city_name)
 
 

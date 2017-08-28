@@ -12,14 +12,8 @@ from etl import etl_insertdb
 load_dotenv(find_dotenv())
 
 
-class GeneralIngest(city_task.CityGeneralTask):
-
-    def requires(self):
-        return InsertDBTasks(self.city)
-
-
 class InsertDBTasks(luigi.WrapperTask):
-    city = luigi.Parameter()
+    city = configuration.get_config().get('general','city')
     insert_tasks = configuration.get_config().get('data','uploads')
     insert_tasks = [x.strip() for x in list(insert_tasks.split(','))] 
     local_path = configuration.get_config().get('general','local_path')
@@ -37,9 +31,9 @@ class InsertDBTasks(luigi.WrapperTask):
                 for year in years:
                     run_task = eval(task_name)
                     tasks.append(run_task(self.city,
-                                          year,
                                           self.local_path,
-                                          self.insert_scripts))
+                                          self.insert_scripts,
+                                          year))
             else:
                 run_task = eval(task_name)
                 tasks.append(run_task(self.city,
@@ -55,7 +49,7 @@ class InsertDBTask(city_task.PostgresTask):
     insert_scripts = luigi.Parameter()
 
     def requires(self):
-        return DownloadTasks()
+        return etl_downloads.DownloadTasks()
 
 
 class built_lds(InsertDBTask):
@@ -76,7 +70,7 @@ class built_lds(InsertDBTask):
                         self.year,
                         self.local_path]
         cmd = " ".join(command_list)
-        pdb.set_trace()
+        
         subprocess.call([cmd], shell=True)
         with open(self.local_path + '/built_lds/' + self.year + '/built_lds_' +
                   self.city + '.sql', 'r') as myfile:
@@ -201,13 +195,15 @@ class water_bodies(InsertDBTask):
 
     @property
     def query(self):
-        command_list = ['sh', self.insert_scripts + "water_bodies.sh",
+        command_list = ['python', self.insert_scripts + "water_bodies.py",
+                        '--city',
                         self.city,
+                        '--local_path',
                         self.local_path]
         cmd = " ".join(command_list)
         subprocess.call([cmd], shell=True)
-        with open(self.local_path + '/water_bodies/' + 'water_bodies_' +
-                  self.city + '.sql', 'r') as myfile:
+        pdb.set_trace()
+        with open(self.local_path + '/water_bodies/' + 'water_bodies_' + self.city + '.sql', 'r') as myfile:
             query_str = myfile.read()
 
         return query_str
