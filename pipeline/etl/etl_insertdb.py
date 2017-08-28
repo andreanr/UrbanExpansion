@@ -196,11 +196,13 @@ class water_bodies(InsertDBTask):
     @property
     def query(self):
         command_list = ['python', self.insert_scripts + "water_bodies.py",
+                        '--city',
                         self.city,
+                        '--local_path',
                         self.local_path]
-        pdb.set_trace()
         cmd = " ".join(command_list)
         subprocess.call([cmd], shell=True)
+        pdb.set_trace()
         with open(self.local_path + '/water_bodies/' + 'water_bodies_' + self.city + '.sql', 'r') as myfile:
             query_str = myfile.read()
 
