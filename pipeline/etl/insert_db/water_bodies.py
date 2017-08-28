@@ -5,6 +5,7 @@ import geopandas as gpd
 import subprocess
 import argparse
 import fiona
+import pdb
 
 from shapely.geometry import Point, Polygon, shape
 from progress.bar import Bar
@@ -45,7 +46,7 @@ def crop_shp(source_shp, destination_shp, buffer_shp):
                 else:
                     ppp.append(Polygon(lista))
             except AssertionError as ex:
-                print "Unexpected error with polygon {}".format(ex)
+                print("Unexpected error with polygon: {error}".format(error=ex))
             for p in ppp:
                 dw = db.intersection(p)
                 if not dw.is_empty:
@@ -82,7 +83,7 @@ if __name__ == "__main__":
     pdb.set_trace()
     b_shp = local_path + '/shp_buffer/' + city + '.shp'
     s_shp = local_path + '/water_bodies/water_bodies.shp'
-    d_shp = local_path + "/water_bodies/" + "_water_bodies_" + city + ".shp" 
-    crop_shp(s_shp=s_shp, d_shp=d_shp, b_shp=b_shp)
+    d_shp = local_path + "/water_bodies/water_bodies_" + city + ".shp" 
+    crop_shp(source_shp=s_shp, destination_shp=d_shp, buffer_shp=b_shp)
     shp_to_pg(d_shp, city, local_path)
 
