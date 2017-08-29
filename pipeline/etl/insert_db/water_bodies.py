@@ -80,7 +80,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     city = args.city
     local_path = args.local_path
-    pdb.set_trace()
     b_shp = local_path + '/shp_buffer/' + city + '.shp'
     s_shp = local_path + '/water_bodies/water_bodies.shp'
     d_shp = local_path + "/water_bodies/water_bodies_" + city + ".shp" 
