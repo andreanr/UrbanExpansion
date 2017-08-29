@@ -202,7 +202,6 @@ class water_bodies(InsertDBTask):
                         self.local_path]
         cmd = " ".join(command_list)
         subprocess.call([cmd], shell=True)
-        pdb.set_trace()
         with open(self.local_path + '/water_bodies/' + 'water_bodies_' + self.city + '.sql', 'r') as myfile:
             query_str = myfile.read()
 
