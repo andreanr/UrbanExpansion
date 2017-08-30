@@ -244,7 +244,7 @@ class geopins(InsertDBTask):
 
     @property
     def query(self):
-        command_list = ['python ', self.insert_scripts + "geopins.py",
+        command_list = ['python3 ', self.insert_scripts + "geopins.py",
                         '--city ', self.city,
                         '--local_path ', self.local_path]
         cmd = " ".join(command_list)
