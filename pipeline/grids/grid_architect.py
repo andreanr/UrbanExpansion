@@ -19,7 +19,7 @@ class GridFeature(city_task.CityGeneralTask):
     year_data = luigi.Parameter()
 
     def requires(self):
-       return [GenerateGridTables(self.city, self.grid_size, self.grid_tables_path),
+       return [GenerateGridTables(self.city, self.grid_size, self.grid_tables_path, self.esri),
                GenerateGrid(self.city, self.grid_size, self.esri)]
 
     @property

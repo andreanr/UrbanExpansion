@@ -105,6 +105,8 @@ def get_data_points(bbox_city):
     bar.finish()
     points = [Point(x['lon'], x['lat']) for i, x in df.iterrows()]
     df = df.drop(['lon', 'lat'], axis=1)
+    if not ("aeroway" in df.columns):
+        df["aeroway"] = None
     df = df.set_geometry(points, crs=_crs)
 
     return df
@@ -149,7 +151,7 @@ def define_url_node(bbox_city, filtro, recurse='down', meta=True):
 if __name__ == "__main__":
     logging.basicConfig()
     parser = argparse.ArgumentParser()
-    parser.add_argument("--city", type=str, help="pass your city name", default="amman")
+    parser.add_argument("--city", type=str, help="pass your city name", default="semarang")
     parser.add_argument("--timeout", type=float, help="specify timeout for API request", default=180)
     parser.add_argument("--local_path", type=str, help="local path to file download", default="/home/data")
     args = parser.parse_args()
@@ -170,6 +172,6 @@ if __name__ == "__main__":
     h = int(round(h, 0))
     m = int(round(m, 0))
     s = round(s, 2)
-    time_str = 'Download highways and converted to shapefile in {hr}:{min}:{seg}.'.format(hr=h, min=m, seg=s)
+    time_str = 'Download geopins  and converted to shapefile in {hr}:{min}:{seg}.'.format(hr=h, min=m, seg=s)
     print(time_str)
     print("Finished processing. Shapefiles saved at: " + pth)

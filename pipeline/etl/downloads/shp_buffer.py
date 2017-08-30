@@ -65,9 +65,9 @@ def shp_to_pg(path, city_name):
 if __name__ == "__main__":
     ox.config(log_file=True, log_console=True, use_cache=True)
     parser = argparse.ArgumentParser()
-    parser.add_argument("--city", type=str, help="pass your city name", default="amman")
-    parser.add_argument("--buffer", type=str, help="pass boundary buffer", default="25000")
-    parser.add_argument("--local_path", type=str, help="path to local download", default="/home/data/shp_buffer")
+    parser.add_argument("--city", type=str, help="pass your city name", default="semarang")
+    parser.add_argument("--buffer", type=str, help="pass boundary buffer", default="18000")
+    parser.add_argument("--local_path", type=str, help="path to local download", default="/home/data")
     parser.add_argument("--data_task", type=str, help="shp_buffer", default="shp_buffer")
     args = parser.parse_args()
     city_name = args.city
@@ -83,7 +83,9 @@ if __name__ == "__main__":
     with open(path, 'w') as fp:
         json.dump(bbox, fp)
     fn = city_name + ".shp"
-    save_shapefile(city, folder=local_path + '/' + data_task, filename=fn)
-    shp_to_pg(path, city_name)
+    fo = local_path + '/' + data_task
+    save_shapefile(city, folder=fo, filename=fn)
+    shp_path = '{folder}/{filename}'.format(folder=fo, filename=fn)
+    shp_to_pg(shp_path, city_name)
 
 

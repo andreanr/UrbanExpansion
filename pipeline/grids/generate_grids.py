@@ -201,9 +201,11 @@ class GenerateTable(city_task.PostgresTask):
     grid_size = luigi.Parameter()
     name = luigi.Parameter()
     columns_dict = luigi.DictParameter()
+    esri=luigi.Parameter()
 
     def requires(self):
-        return PreprocessTask()
+        return [PreprocessTask(),
+                GenerateGrid(self.city, self.grid_size,self.esri)]
 
     @property
     def update_id(self):
@@ -278,6 +280,7 @@ class GenerateGridTables(luigi.WrapperTask):
     city = luigi.Parameter()
     grid_size = luigi.Parameter()
     grid_tables_path = luigi.Parameter()
+    esri = luigi.Parameter()
 
     def requires(self):
         tables_tasks = [GenerateUrbanClusterTable(self.city, self.grid_size)]
@@ -286,7 +289,8 @@ class GenerateGridTables(luigi.WrapperTask):
             tables_tasks.append(GenerateTable(self.city,
                                               self.grid_size,
                                               table,
-                                              cols))
+                                              cols,
+                                              self.esri))
         return tables_tasks
 
 
