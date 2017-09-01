@@ -61,14 +61,14 @@ Features:
 models: ['RandomForest', 'ExtraTrees', 'LogisticRegression']
 parameters:
     RandomForest:
-        n_estimators: [10, 50, 100, 500, 1000, 5000, 10000]
-        max_depth: [5, 10, 50, 70] 
+        n_estimators: [100, 500, 1000, 5000, 10000]
+        max_depth: [5, 10, 50] 
         max_features: ['sqrt']
         criterion: ['gini']
         min_samples_split: [2,5,10]
         random_state: [2193]
     ExtraTrees:
-        n_estimators: [10, 50, 100, 500, 1000, 5000,10000]
+        n_estimators: [100, 500, 1000, 5000,10000]
         max_depth: [5, 10, 50]
         max_features: ['sqrt']
         criterion: ['gini']

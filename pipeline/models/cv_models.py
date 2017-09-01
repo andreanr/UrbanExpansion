@@ -61,6 +61,11 @@ class CVModel(city_task.FeaturesTask):
                              self.label_range,
                              self.model_comment)
 
+    def requires(self):
+
+        yield [FeatureGenerator(self.features),
+               LabelGenerator()]
+
     def run(self):
         engine = utils.get_engine()
         connection = engine.raw_connection()
@@ -139,8 +144,6 @@ class CVModel(city_task.FeaturesTask):
                                           predict_index,
                                           scores,
                                           predict_y)
-        # Update marker table
-        connection.commit()
         connection.close()
 
 class RunCVModels(luigi.WrapperTask):
