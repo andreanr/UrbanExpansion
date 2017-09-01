@@ -63,6 +63,38 @@ RUN apt-get install -y -qq wget \
     && chmod a+x /usr/local/bin/rsub \
     && apt-get install -y -qq screen
 
+RUN wget http://download.osgeo.org/libspatialindex/spatialindex-src-1.8.5.tar.gz \
+    && tar xzvf spatialindex-src-1.8.5.tar.gz \
+    && cd spatialindex-src-1.8.5 \ 
+    && ./configure \
+    && make install \
+    && cd ..
+
+RUN LD_LIBRARY_PATH=/usr/local/lib
+
+RUN git clone https://github.com/jwass/geopandas_osm.git \
+    && cd geopandas_osm/ \
+    && pip install . \
+    && cd ..
+
+RUN git clone https://github.com/gboeing/osmnx.git \
+    && cd osmnx \
+    && pip install .
+    && cd ..
+
+RUN apt-get install -y -qq tk-dev && rm -r /var/lib/apt/lists/*
+
+RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable \
+    && apt-get install -y -qq postgis
+
+RUN wget http://download.osgeo.org/geos/geos-3.4.2.tar.bz2 \
+    && tar xjf geos-3.4.2.tar.bz2 \
+    && cd geos-3.4.2 \
+    && ./configure \
+    && make \
+    && make install \
+    && cd ..
+
 RUN echo "luigi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 COPY ../../../UrbanExpansion/ ./UrbanExpansion/
