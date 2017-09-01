@@ -13,5 +13,4 @@ scikit-learn==0.18.1
 scipy==0.18.1
 Shapely==1.5.17.post1
 SQLAlchemy==1.1.4
-luigi==2.6.2
 elevation==1.0.1

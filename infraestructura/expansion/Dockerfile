@@ -17,9 +17,9 @@ RUN echo "es_MX.UTF-8 UTF-8" >> /etc/locale.gen \
 
 RUN apt-get update && apt-get install -y libsqlite3-dev libmysqlclient-dev
 
-RUN apt-get install -y git
-
-RUN apt-get install -y -qq vim;
+RUN apt-get install -y git \
+    && apt-get install -y -qq vim \
+    && apt-get install -y wget
 
 RUN apt-get install -y -qq postgresql postgresql-contrib \
     && apt-get install -y -qq libpq-dev
@@ -29,6 +29,16 @@ RUN apt-get install -y -qq software-properties-common python-software-properties
     && apt-get install -y -qq gdal-bin \
     && apt-get install -y -qq libgeos-dev \
     && apt-get clean
+
+RUN wget http://download.osgeo.org/geos/geos-3.4.2.tar.bz2 \
+    && tar xjf geos-3.4.2.tar.bz2 \
+    && cd geos-3.4.2 \
+    && ./configure \
+    && make \
+    && make install \
+    && cd ..
+    && apt-get clean && rm -rf geos-3.4.2/ \
+    && rm geos-3.4.2.tar.bz2
 
 RUN mkdir -p /tmp \
     && curl http://download.osgeo.org/gdal/2.1.0/gdal-2.1.0.tar.gz --output gdal-2.1.0.tar.gz --silent \
@@ -47,6 +57,7 @@ RUN mkdir -p /tmp \
     && apt-get install -y -qq python-gdal
 
 RUN ln -s /usr/lib/libproj.so.0 /usr/lib/libproj.so
+RUN LD_LIBRARY_PATH=/usr/local/lib
 
 RUN git clone https://github.com/geopandas/geopandas.git \
     && cd geopandas \
@@ -59,33 +70,28 @@ RUN wget http://download.osgeo.org/libspatialindex/spatialindex-src-1.8.5.tar.gz
     && cd spatialindex-src-1.8.5 \ 
     && ./configure \
     && make install \
-    && cd ..
-
-RUN LD_LIBRARY_PATH=/usr/local/lib
+    && cd .. \
+    && rm -rf spatialindex-src-1.8.5 \
+    && rm spatialindex-src-1.8.5.tar.gz
 
 RUN git clone https://github.com/jwass/geopandas_osm.git \
     && cd geopandas_osm/ \
     && pip install . \
-    && cd ..
+    && cd .. \
+    && rm -rf geopandas_osm/
 
 RUN git clone https://github.com/gboeing/osmnx.git \
     && cd osmnx \
-    && pip install .
-    && cd ..
+    && pip install . \
+    && cd .. \
+    && rm -rf osmnx/
 
 RUN apt-get install -y -qq tk-dev && rm -r /var/lib/apt/lists/*
 
-RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable \
+RUN add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y \
     && apt-get install -y -qq postgis
 
-RUN wget http://download.osgeo.org/geos/geos-3.4.2.tar.bz2 \
-    && tar xjf geos-3.4.2.tar.bz2 \
-    && cd geos-3.4.2 \
-    && ./configure \
-    && make \
-    && make install \
-    && cd ..
-
+RUN pip install luigi
 RUN echo "luigi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 ADD requirements.txt /tmp/requirements.txt
