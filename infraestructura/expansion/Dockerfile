@@ -13,16 +13,19 @@ RUN \
 ## Arreglamos el LOCALE
 RUN echo "es_MX.UTF-8 UTF-8" >> /etc/locale.gen \
     && locale-gen es_MX.utf8 \
-    && /usr/sbin/update-locale LANG=es_MX.UTF-8 \
+    && /usr/sbin/update-locale LANG=es_MX.UTF-8
 
-RUN apt-get update && apt-get install -y libsqlite3-dev libmysqlclient-dev
+RUN apt-get update && apt-get install -y libsqlite3-dev libmysqlclient-dev libpq-dev
 
 RUN apt-get install -y git \
     && apt-get install -y -qq vim \
-    && apt-get install -y wget
+    && apt-get install -y wget \
+    && apt-get install -y -qq screen
 
-RUN apt-get install -y -qq postgresql postgresql-contrib \
-    && apt-get install -y -qq libpq-dev
+RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt trusty-pgdg main" >> /etc/apt/sources.list' \
+    && wget --quiet -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc \
+    | apt-key add - \
+    && apt-get install -y -qq postgresql-9.4-postgis-2.1 pgadmin3 postgresql-contrib
 
 RUN apt-get install -y -qq software-properties-common python-software-properties \
     && add-apt-repository ppa:ubuntugis/ppa -y \
@@ -36,7 +39,7 @@ RUN wget http://download.osgeo.org/geos/geos-3.4.2.tar.bz2 \
     && ./configure \
     && make \
     && make install \
-    && cd ..
+    && cd .. \
     && apt-get clean && rm -rf geos-3.4.2/ \
     && rm geos-3.4.2.tar.bz2
 
@@ -97,9 +100,5 @@ RUN echo "luigi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 ADD requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
-COPY ../../../UrbanExpansion/ ./UrbanExpansion/
-#RUN chmod +x run.sh
-
-#CMD ["run.sh"]
 CMD [ "/bin/sh", "-c", "while true; do echo hello world; sleep 1; done"]
 
