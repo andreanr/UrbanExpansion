@@ -76,7 +76,7 @@ class LabelGenerator(city_task.FeaturesTask):
                                                         size=self.grid_size)
     @property
     def query(self):
-        years = [self.year_train, self.year_test, self.year_predict]
+        years = self.years_train + [ self.year_predict]
         years = [x for x in years if x]
         return generate_labels(self.city,
                                self.labels_table_prefix,
