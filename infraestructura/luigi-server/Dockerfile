@@ -19,6 +19,4 @@ VOLUME /luigid/state
 
 CMD ["/usr/local/bin/luigid"]
 
-EXPOSE 8083:8082
-
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
