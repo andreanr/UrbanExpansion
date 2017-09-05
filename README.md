@@ -66,7 +66,7 @@ Configuration Files:
 
 -`pipeline/luigi.cfg` will need to be configured to run luigi    
 -`pipeline/experiment.yaml` will need to be configured for the models and features to run    
--`pipeline/.env` will need to be configured to connect to databases 
+-`pipeline/.env` will need to be configured to connect to databases (make a copy from `pipeline/_env`)
 
 Run the following commands: 
 
