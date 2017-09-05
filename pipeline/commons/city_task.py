@@ -21,7 +21,7 @@ class PostgresTask(postgres.PostgresQuery):
 class CityGeneralTask(PostgresTask):
     city = configuration.get_config().get('general','city')
     grid_size = configuration.get_config().get('general','grid_size')
-    esri = configuration.get_config().get('general','esri')
+    esri = configuration.get_config().get(city,'esri')
     urban_built_threshold = configuration.get_config().get('general','urban_built_threshold')
     urban_population_threshold = configuration.get_config().get('general','urban_population_threshold')
     urban_cluster_threshold = configuration.get_config().get('general','urban_cluster_threshold')
