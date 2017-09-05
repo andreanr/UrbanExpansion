@@ -65,7 +65,7 @@ In order to run the pipeline you have to change these configuration files for th
 Configuration Files: 
 
 -`pipeline/luigi.cfg` will need to be configured to run luigi    
--`pipeline/experiment.yaml` will need to be configured for the models and features to run
+-`pipeline/experiment.yaml` will need to be configured for the models and features to run    
 -`pipeline/.env` will need to be configured to connect to databases 
 
 Run the following commands: 
