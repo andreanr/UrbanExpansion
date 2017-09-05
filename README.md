@@ -60,7 +60,7 @@ Provides a basemap for the lakes, seas, oceans, large rivers, and dry salt flats
 
 
 ## Repo Structure and How to Run
-In order to run the pipeline you have to change these configuration files for the new values and run the following commands. Also, we have created Docker images whose associated containers are already set up, see the Docker section below.
+In order to run the pipeline you have to change these configuration files for the new values and run the following commands.
 
 Configuration Files: 
 
