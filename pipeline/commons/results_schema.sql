@@ -1,6 +1,3 @@
-DROP SCHEMA IF EXISTS results CASCADE;
-CREATE SCHEMA results;
-
 -- model table containing each of the models run.
 CREATE TABLE results.models (
   model_id              SERIAL PRIMARY KEY,

@@ -42,43 +42,46 @@ class DownloadTasks(luigi.WrapperTask):
         yield tasks
 
 
-class CreateSchema(postgres.PostgresQuery):
-    # RDS connection
-    database = os.environ.get("PGDATABASE")
-    user = os.environ.get("POSTGRES_USER")
-    password = os.environ.get("POSTGRES_PASSWORD")
-    host = os.environ.get("PGHOST")
-
-    # schema to query parameter
-    query = luigi.Parameter()
+class CreateSchema(city_task.PostgresTask):
+    schema_name = luigi.Parameter()
     table = ''
     
     @property
     def update_id(self):
-        return self.database + "__" + self.host + ':' + self.query
+        return "CreateSchema__{schema}".format(schema=schema_name)
 
-    def run(self):
-        connection = self.output().connect()
-        cursor = connection.cursor()
-        sql = "Create schema {schema}".format(schema=self.query)
-
-        print(sql)
-        cursor.execute(sql)
-
-        # Update marker table
-        self.output().touch(connection)
-
-        # commit and close connection
-        connection.commit()
-        connection.close()
+    @property
+    def query(self):
+	return "Create schema {schema}".format(schema=schema_name)
 
 
 class CreateSchemas(luigi.WrapperTask):
     schemas = configuration.get_config().get('schemas', 'names')
 
     def requires(self):
-        yield [CreateSchema(query) for
-                query in self.schemas.split(',')]
+        yield [CreateSchema(table) for
+                table in self.schemas.split(',')]
+
+
+class ResultsSchema(city_task.PostgresTask):
+    """
+    Script for generating results schema tables
+    """
+    table = ''
+
+    @property
+    def update_id(self):
+        return "ResultsSchema"
+
+    @property
+    def query(self):
+        with open('commons/results_schema.sql', 'r') as fd
+            sqlFile = fd.read()
+        return sqlFile
+
+    def requires(self):
+        return CreateSchemas()
+
 
 ###################
 #   DATA INGEST
@@ -94,7 +97,7 @@ class DownloadBufferTask(luigi.Task):
     buffer_dist = configuration.get_config().get(city,'buffer_dist')
 
     def requires(self):
-        return CreateSchemas()
+        return ResultsSchema()
 
     def output(self):
         return luigi.LocalTarget(self.local_path + '/shp_buffer/' +
