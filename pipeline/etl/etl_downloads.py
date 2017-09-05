@@ -91,7 +91,7 @@ class DownloadBufferTask(luigi.Task):
     data_task = luigi.Parameter()
     download_scripts = luigi.Parameter()
     local_path = luigi.Parameter()
-    buffer_dist = configuration.get_config().get('general','buffer_dist')
+    buffer_dist = configuration.get_config().get(city,'buffer_dist')
 
     def requires(self):
         return CreateSchemas()
