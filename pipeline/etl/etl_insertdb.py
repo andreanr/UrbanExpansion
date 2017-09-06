@@ -234,10 +234,8 @@ class water_bodies(InsertDBTask):
 
     @property
     def query(self):
-        command_list = ['python', self.insert_scripts + "water_bodies.py",
-                        '--city',
+        command_list = ['sh', self.insert_scripts + "water_bodies.sh",
                         self.city,
-                        '--local_path',
                         self.local_path]
         cmd = " ".join(command_list)
         subprocess.call([cmd], shell=True)
