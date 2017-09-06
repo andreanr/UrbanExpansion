@@ -48,11 +48,11 @@ class CreateSchema(city_task.PostgresTask):
     
     @property
     def update_id(self):
-        return "CreateSchema__{schema}".format(schema=schema_name)
+        return "CreateSchema__{schema}".format(schema=self.schema_name)
 
     @property
     def query(self):
-	return "Create schema {schema}".format(schema=schema_name)
+        return "Create schema {schema}".format(schema=self.schema_name)
 
 
 class CreateSchemas(luigi.WrapperTask):
@@ -75,7 +75,7 @@ class ResultsSchema(city_task.PostgresTask):
 
     @property
     def query(self):
-        with open('commons/results_schema.sql', 'r') as fd
+        with open('commons/results_schema.sql', 'r') as fd:
             sqlFile = fd.read()
         return sqlFile
 
@@ -94,7 +94,6 @@ class DownloadBufferTask(luigi.Task):
     data_task = luigi.Parameter()
     download_scripts = luigi.Parameter()
     local_path = luigi.Parameter()
-    buffer_dist = configuration.get_config().get(city,'buffer_dist')
 
     def requires(self):
         return ResultsSchema()
@@ -104,12 +103,13 @@ class DownloadBufferTask(luigi.Task):
                                  self.city + '_shp_buffer.json')
 
     def run(self):
+        buffer_dist = configuration.get_config().get(self.city,'buffer_dist')
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
         
         command_list = ['python', self.download_scripts + "shp_buffer.py",
                         '--city', self.city,
-                        '--buffer', self.buffer_dist,
+                        '--buffer', buffer_dist,
                         '--local_path', self.local_path,
                         '--data_task', self.data_task]
         cmd = " ".join(command_list)

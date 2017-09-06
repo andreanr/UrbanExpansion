@@ -70,7 +70,7 @@ class city_center(city_task.PostgresTask):
 
 class PreprocessTask(luigi.WrapperTask):
     city = configuration.get_config().get('general','city')
-    esri = configuration.get_config().get('general','esri')
+    esri = configuration.get_config().get(city,'esri')
 
     def requires(self):
         yield city_center(self.city)
