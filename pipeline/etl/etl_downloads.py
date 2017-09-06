@@ -104,11 +104,13 @@ class DownloadBufferTask(luigi.Task):
 
     def run(self):
         buffer_dist = configuration.get_config().get(self.city,'buffer_dist')
+        country_name = configuration.get_config().get(self.city,'country')
         if not os.path.exists(self.local_path + '/' + self.data_task):
             os.makedirs(self.local_path + '/' + self.data_task)
         
         command_list = ['python', self.download_scripts + "shp_buffer.py",
                         '--city', self.city,
+                        '--country', country_name,
                         '--buffer', buffer_dist,
                         '--local_path', self.local_path,
                         '--data_task', self.data_task]

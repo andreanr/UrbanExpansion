@@ -65,16 +65,18 @@ def shp_to_pg(path, city_name):
 if __name__ == "__main__":
     ox.config(log_file=True, log_console=True, use_cache=True)
     parser = argparse.ArgumentParser()
-    parser.add_argument("--city", type=str, help="pass your city name", default="amman")
-    parser.add_argument("--buffer", type=str, help="pass boundary buffer", default="25000")
+    parser.add_argument("--city", type=str, help="pass your city name", default="mafraq")
+    parser.add_argument("--country", type=str, help="pass your country name", default="jordan")
+    parser.add_argument("--buffer", type=str, help="pass boundary buffer", default="10000")
     parser.add_argument("--local_path", type=str, help="path to local download", default="/home/data")
     parser.add_argument("--data_task", type=str, help="shp_buffer", default="shp_buffer")
     args = parser.parse_args()
     city_name = args.city
+    country_name = args.country
     local_path = args.local_path
     data_task = args.data_task
     buff_dist = int(args.buffer)
-    query = {'city': city_name}
+    query = {'city': city_name, 'country': country_name}
     city = ox.gdf_from_place(query, buffer_dist=buff_dist)
     labs = ['bbox_west', 'bbox_south', 'bbox_east', 'bbox_north']
     vals = city.total_bounds
