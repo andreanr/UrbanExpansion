@@ -6,10 +6,49 @@ from luigi import configuration
 from luigi.contrib import postgres
 from dotenv import load_dotenv,find_dotenv
 from commons import city_task
-from etl import etl_downloads
-from etl import etl_insertdb
 
 load_dotenv(find_dotenv())
+
+
+class CreateSchema(city_task.PostgresTask):
+    schema_name = luigi.Parameter()
+    table = ''
+
+    @property
+    def update_id(self):
+        return "CreateSchema__{schema}".format(schema=self.schema_name)
+
+    @property
+    def query(self):
+        return "Create schema {schema}".format(schema=self.schema_name)
+
+
+class CreateSchemas(luigi.WrapperTask):
+    schemas = configuration.get_config().get('schemas', 'names')
+
+    def requires(self):
+        yield [CreateSchema(table) for
+                table in self.schemas.split(',')]
+
+
+class ResultsSchema(city_task.PostgresTask):
+    """
+    Script for generating results schema tables
+    """
+    table = ''
+
+    @property
+    def update_id(self):
+        return "ResultsSchema"
+
+    @property
+    def query(self):
+        with open('commons/results_schema.sql', 'r') as fd:
+            sqlFile = fd.read()
+        return sqlFile
+
+    def requires(self):
+        return CreateSchemas()
 
 
 class InsertDBTasks(luigi.WrapperTask):
@@ -49,7 +88,7 @@ class InsertDBTask(city_task.PostgresTask):
     insert_scripts = luigi.Parameter()
 
     def requires(self):
-        return etl_downloads.DownloadTasks()
+        return ResultsSchema()
 
 
 class built_lds(InsertDBTask):
