@@ -11,6 +11,7 @@ import geopandas as gpd
 import time
 import logging
 import warnings
+import re
 
 from progress.bar import Bar  # sudo pip install progress
 from pandas.io.common import urlencode
@@ -79,6 +80,8 @@ def get_data_points(bbox_city):
     :return: GeoDataFrame con highways
     """
 
+    headers = {'User-Agent': 'Mozilla/5.0'}
+
     print("Retrieving data from the OSM Overpass API...")
     filtros = ['["amenity"]', '["landuse"]', '["building"]', '["leisure"]', '["natural"]',
                '["shop"]', '["historic"]', '["tourism"]', '["man_made"]', '["bicycle_parking"]',
@@ -88,21 +91,38 @@ def get_data_points(bbox_city):
     bar = Bar('Processing', max=mm, suffix='%(index)d/%(max)d - %(percent).1f%% - %(eta)ds')
     for filtro in filtros:
         url = define_url_node(bbox_city=bbox_city, filtro=filtro)
-        response = requests.get(url)
-        response_json = response.json()
-        nodos = dict()
-        for element in response_json['elements']:
-            if element['type'] == 'node':
-                key = element['id']
-                nodos[key] = get_node(element)
-        if len(nodos) > 0:
-            df_nodos = pd.DataFrame.from_dict(nodos)
-            df_nodos = df_nodos.transpose()
-            df_nodos = fix_column_names(df_nodos)
-            df_nodos = df_nodos.loc[:, ~df_nodos.columns.duplicated()]
-            df = pd.concat([df,df_nodos], axis=0, ignore_index=True)
+        response = requests.get(url, headers=headers, timeout=1000, verify=False)
+        if response.status_code == 200:
+            response_json = response.json()
+            nodos = dict()
+            for element in response_json['elements']:
+                if element['type'] == 'node':
+                    key = element['id']
+                    nodos[key] = get_node(element)
+                    node = nodos[key]
+                    if re.match("^[-+]?[0-9]*\.?[0-9]+$", str(node['lon'])) is None:
+                        nodos.pop(key, None)
+                    if re.match("^[-+]?[0-9]*\.?[0-9]+$", str(node['lat'])) is None:
+                        nodos.pop(key, None)
+                    try:
+                        node['lon'] = float(node['lon'])
+                        node['lat'] = float(node['lat'])
+                    except ValueError:
+                        print("Not a float")
+                        nodos.pop(key, None)
+            if len(nodos) > 0:
+                df_nodos = pd.DataFrame.from_dict(nodos)
+                df_nodos = df_nodos.transpose()
+                df_nodos = fix_column_names(df_nodos)
+                df_nodos = df_nodos.loc[:, ~df_nodos.columns.duplicated()]
+                df = pd.concat([df,df_nodos], axis=0, ignore_index=True)
+        else:
+            print("No nodes found for {filtro} tag.".format(filtro=filtro))
         bar.next()
     bar.finish()
+    df = df[(df['lon'].notnull()) & (df['lat'].notnull())]
+    df['lat'] = df['lat'].apply(lambda x: float(x))
+    df['lon'] = df['lon'].apply(lambda x: float(x))
     points = [Point(x['lon'], x['lat']) for i, x in df.iterrows()]
     df = df.drop(['lon', 'lat'], axis=1)
     if not ("aeroway" in df.columns):
@@ -151,7 +171,7 @@ def define_url_node(bbox_city, filtro, recurse='down', meta=True):
 if __name__ == "__main__":
     logging.basicConfig()
     parser = argparse.ArgumentParser()
-    parser.add_argument("--city", type=str, help="pass your city name", default="semarang")
+    parser.add_argument("--city", type=str, help="pass your city name", default="mafraq")
     parser.add_argument("--timeout", type=float, help="specify timeout for API request", default=180)
     parser.add_argument("--local_path", type=str, help="local path to file download", default="/home/data")
     args = parser.parse_args()
