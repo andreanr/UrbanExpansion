@@ -65,7 +65,7 @@ def crop_shp(source_shp, destination_shp, buffer_shp):
     bar.finish()
     
     df = gpd.GeoDataFrame()
-    if (data) > 0:
+    if len(data) > 0:
         df['geometry'] = data
         df.crs = buff.crs
         df.to_file(destination_shp, driver='ESRI Shapefile')
@@ -80,7 +80,6 @@ def shp_to_pg(path, city_name, local):
                 "gid int4," + \
 	        "fid float8," + \
 	        "geom geometry);"
-        open(local + "/water_bodies/water_bodies_" + city_name + '.sql','w'):
         with open(local + "/water_bodies/water_bodies_" + city_name + '.sql', "w") as q:
             q.write(query)
     else:
