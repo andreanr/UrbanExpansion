@@ -6,8 +6,9 @@ import subprocess
 import argparse
 import fiona
 import pdb
+import os
 
-from shapely.geometry import Point, Polygon, shape
+from shapely.geometry import Point, Polygon, shape, LineString
 from progress.bar import Bar
 
 
@@ -49,33 +50,53 @@ def crop_shp(source_shp, destination_shp, buffer_shp):
                 print("Unexpected error with polygon: {error}".format(error=ex))
             for p in ppp:
                 dw = db.intersection(p)
+                #dbp = gpd.GeoSeries(p)
+                #df1 = gpd.GeoDataFrame({'geometry': dbp})
+                #pp = gpd.GeoSeries(p)
+                #df2 = gpd.GeoDataFrame({'geometry':pp})
+                #dw = gpd.overlay(df1, df2, how='intersection')
+                #if not dw.empty:
+                #    if isinstance(dw["geometry"][0], Polygon):
+                #        data.append(dw["geometry"][0])
                 if not dw.is_empty:
                     if isinstance(dw, Polygon):
                         data.append(dw)
         bar.next()
     bar.finish()
-
+    
     df = gpd.GeoDataFrame()
-    df['geometry'] = data
-    df.crs = buff.crs
-    df.to_file(destination_shp, driver='ESRI Shapefile')
+    if (data) > 0:
+        df['geometry'] = data
+        df.crs = buff.crs
+        df.to_file(destination_shp, driver='ESRI Shapefile')
+    else:
+        open(destination_shp, 'a').close()
 
 
 def shp_to_pg(path, city_name, local):
     print('Saving query for upload to db')
-    cmd = 'shp2pgsql -s 4326 -c -W "latin1" ' + \
-          path + " raw." + city_name + "_water_bodies" + " > " + \
-          local + "/water_bodies/water_bodies_" + city_name + '.sql'
+    if os.stat(path).st_size == 0:
+        query = "create table raw." + city_name + "_water_bodies(" + \
+                "gid int4," + \
+	        "fid float8," + \
+	        "geom geometry);"
+        open(local + "/water_bodies/water_bodies_" + city_name + '.sql','w'):
+        with open(local + "/water_bodies/water_bodies_" + city_name + '.sql', "w") as q:
+            q.write(query)
+    else:
+        cmd = 'shp2pgsql -s 4326 -c -W "latin1" ' + \
+              path + " raw." + city_name + "_water_bodies" + " > " + \
+              local + "/water_bodies/water_bodies_" + city_name + '.sql'
+        exec_cmd = run_command(cmd)
+        print(exec_cmd)
+
     msg = "Query saved at: {pth}".format(pth=local_path + '/water_bodies/water_bodies_' + city_name + '.sql')
     print(msg)
-    print(cmd)
-    exec_cmd = run_command(cmd)
-    print(exec_cmd)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--city", type=str, help="pass your city name", default="denpasar")
+    parser.add_argument("--city", type=str, help="pass your city name", default="mafraq")
     parser.add_argument("--local_path", type=str, help="path to save local downloads", default="/home/data")
     args = parser.parse_args()
     city = args.city
