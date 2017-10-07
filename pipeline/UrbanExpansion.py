@@ -3,8 +3,8 @@ import pdb
 from luigi import configuration
 from luigi.contrib import postgres
 
-#from models.models_tasks import TrainModels
-from models.cv_models import RunCVModels
+from models.models_tasks import TrainModels
+#from models.cv_models import RunCVModels
 import utils
 
 class RunUrbanExpansion(luigi.WrapperTask):
@@ -15,7 +15,7 @@ class RunUrbanExpansion(luigi.WrapperTask):
         features = utils.get_features(experiment)
         models = experiment['models']
         parameters = experiment['parameters']
-        return RunCVModels(features=features,
+        return TrainModels(features=features,
                            models=models,
                            parameters=parameters)
 

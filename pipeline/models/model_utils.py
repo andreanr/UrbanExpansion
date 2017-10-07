@@ -30,7 +30,9 @@ def get_data(db_engine,
                                                         prefix=labels_table_prefix,
                                                         size=grid_size)
 
-    query = ("""SELECT cell_id, {features}, label::bool
+    query = ("""SELECT cell_id, {features}, label::bool, 
+                CASE WHEN urban_distance_km = 0
+                      THEN 1 ELSE 0 END AS urban_dummy
                 FROM  features.{features_table_name}
                 LEFT OUTER JOIN features.{labels_table_name}
                 USING (cell_id, year_model)
@@ -44,7 +46,10 @@ def get_data(db_engine,
 
     data = pd.read_sql(query, db_engine)
     data.set_index('cell_id', inplace=True)
-    return np.array(data.ix[:, data.columns != 'label']), np.array(data['label']), data.index
+    X = np.array(data.ix[:, (data.columns != 'label') & (data.columns !='urban_dummy')])
+    y = np.array(data['label'])
+    costs = np.array(data['urban_dummy'])
+    return X, y, data.index, costs
 
 
 def get_feature_importances(model):

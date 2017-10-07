@@ -32,10 +32,20 @@ class TrainModel(city_task.FeaturesTask):
     timestamp = datetime.datetime.now()
     table = 'results.models'
 
-    def requires(self):
-      
-        yield [FeatureGenerator(self.features),
-               LabelGenerator()]
+    @property
+    def update_id(self):
+        hash_parameters = model_utils.generate_uuid(dict(self.parameters))
+        hash_features = model_utils.generate_uuid(self.features)
+        return ("""TrainModel__{city}:{size}_{model}:{params}:{feat}:{year}:{built}:{pop}:{cluster}"""
+                    .format(city=self.city,
+                            size=self.grid_size,
+                            model=self.model,
+                            params=hash_parameters,
+                            feat=hash_features,
+                            year="-".join([str(x) for x in self.years_train]),
+                            built=self.urban_built_threshold,
+                            pop=self.urban_population_threshold,
+                            cluster=self.urban_cluster_threshold))
 
     @property
     def query(self):
@@ -49,12 +59,18 @@ class TrainModel(city_task.FeaturesTask):
                              self.city,
                              self.parameters,
                              self.features,
-                             self.year_train,
+                             self.years_train,
                              self.grid_size,
                              self.urban_built_threshold,
                              self.urban_population_threshold,
                              self.urban_cluster_threshold,
+                             self.label_range,
                              self.model_comment)
+
+    def requires(self):
+      
+        yield [FeatureGenerator(self.features),
+               LabelGenerator()]
 
     def run(self):
         engine = utils.get_engine()
@@ -63,18 +79,17 @@ class TrainModel(city_task.FeaturesTask):
 
         # commit and close connection
         print('Get data')
-        train_x, train_y = model_utils.get_data(engine,
-                                       self.year_train,
+        X, y, X_indexes, train_costs = model_utils.get_data(engine,
+                                       self.years_train,
                                        self.city,
                                        self.features,
                                        self.grid_size,
                                        self.features_table_prefix,
                                        self.labels_table_prefix)
-
         parameters = dict(self.parameters)
         modelobj = model_utils.define_model(self.model, parameters)
         print('fit model')
-        modelobj.fit(train_x, train_y)
+        modelobj.fit(X, y)
 
         print('get feature importances')
         importances = model_utils.get_feature_importances(modelobj)
@@ -87,49 +102,32 @@ class TrainModel(city_task.FeaturesTask):
         model_utils.store_importances(engine, model_id, self.city, self.features, importances)
 
         # Testing
-        if self.year_test:
-            print('testing')
-            test_x, test_y  = model_utils.get_data(engine,
-                                          self.year_test,
-                                          self.city,
-                                          self.features,
-                                          self.grid_size,
-                                          self.features_table_prefix,
-                                          self.labels_table_prefix)
-            test_x['scores'] = model_utils.predict_model(modelobj, test_x)
-            model_utils.store_predictions(engine,
-                                          model_id,
-                                          self.city,
-                                          self.year_test,
-                                          test_x.index,
-                                          test_x['scores'],
-                                          test_y)
+        print('testing')
+        test_x, test_y, test_index, test_costs = model_utils.get_data(engine,
+                                                            [self.year_test],
+                                                            self.city,
+                                                            self.features,
+                                                            self.grid_size,
+                                                            self.features_table_prefix,
+                                                            self.labels_table_prefix)
+        scores = model_utils.predict_model(modelobj, test_x)
+        model_utils.store_predictions(engine,
+                                      model_id,
+                                      self.city,
+                                      self.year_test,
+                                      test_index,
+                                      scores,
+                                      test_y)
+        if len(test_y) > 0:
             print('scoring')
             metrics = scoring.calculate_all_evaluation_metrics(test_y,
-                                                               test_x['scores'])
+                                                               scores, test_costs)
             model_utils.store_evaluations(engine,
                                           model_id,
                                           self.city,
-                                          self.year_test,
+                                          [int(self.year_test)],
+                                          'temporal',
                                           metrics)
-        # Predicting
-        if self.year_predict:
-            print('predicting')
-            predict_x, predict_y = model_utils.get_data(engine,
-                                                         self.year_predict,
-                                                         self.city,
-                                                         self.features,
-                                                         self.grid_size,
-                                                         self.features_table_prefix,
-                                                         self.labels_table_prefix)
-            predict_x['scores'] = model_utils.predict_model(modelobj, predict_x)
-            model_utils.store_predictions(engine,
-                                          model_id,
-                                          self.city,
-                                          self.year_predict,
-                                          predict_x.index,
-                                          predict_x['scores'],
-                                          predict_y)
 
         # Update marker table
         self.output().touch(connection)

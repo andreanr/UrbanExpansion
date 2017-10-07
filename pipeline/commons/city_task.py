@@ -29,7 +29,7 @@ class CityGeneralTask(PostgresTask):
 
 class FeaturesTask(CityGeneralTask):
     years_train = json.loads(configuration.get_config().get('general', 'years_train'))
-    year_predict = configuration.get_config().get('general', 'year_predict')
+    year_test = configuration.get_config().get('general', 'year_test')
     label_range = json.loads(configuration.get_config().get('general', 'label_range'))
     features_table_prefix = configuration.get_config().get('general','features_table_prefix')
     labels_table_prefix = configuration.get_config().get('general','labels_table_prefix')
@@ -37,4 +37,3 @@ class FeaturesTask(CityGeneralTask):
     dense_built_threshold = configuration.get_config().get('general','dense_built_threshold')
     dense_population_threshold = configuration.get_config().get('general','dense_population_threshold')
     dense_cluster_threshold = configuration.get_config().get('general','dense_cluster_threshold')
-
